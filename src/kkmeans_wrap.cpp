@@ -38,9 +38,15 @@ List kkmeans(NumericMatrix data, int k, String kern, double param, int iter_max)
 
   // This is a hack because there is no clear way to convert a pointer to a
   // Vector object?
-  IntegerMatrix cluster_out(n, 1, ic1);
+  IntegerVector cluster_out(n);
+  for (int i = 0; i < n; i++)
+    cluster_out[i] = ic1[i] + 1;
+
   NumericMatrix mu_out(k, p, mu);
-  NumericMatrix sse_out(k, 1, sse);
+
+  NumericVector sse_out(k);
+  for (int i = 0; i < k; i++)
+    sse_out[i] = sse[i];
 
   List out = List::create(_["cluster"] = cluster_out, _["center"] = mu_out,
       _["sse"] = sse_out);
