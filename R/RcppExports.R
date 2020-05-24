@@ -5,7 +5,8 @@ timesTwo <- function(x) {
     .Call(`_kkmeans_timesTwo`, x)
 }
 
-kkmeans <- function(data, k, kern, param, iter_max) {
+#' @export
+kkmeans <- function(data, k, kern, param, iter_max = 1000L) {
     .Call(`_kkmeans_kkmeans`, data, k, kern, param, iter_max)
 }
 

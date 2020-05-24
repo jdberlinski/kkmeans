@@ -9,8 +9,9 @@ void kcluster(double x[], int n, int p, int k, double h, int iter_max,
 double kernel_gaussian(int i, int j, double x[], int n, int p, double sigmasq);
 double kernel_poly(int i, int j, double x[], int n, int p, double h);
 
+//' @export
 // [[Rcpp::export]]
-List kkmeans(NumericMatrix data, int k, String kern, double param, int iter_max) {
+List kkmeans(NumericMatrix data, int k, String kern, double param, int iter_max = 1000) {
 
   int n = data.nrow();
   int p = data.ncol();
