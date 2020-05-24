@@ -2,11 +2,22 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 timesTwo <- function(x) {
-    .Call(`_kkmeans_timesTwo`, x)
+    .Call('_kkmeans_timesTwo', PACKAGE = 'kkmeans', x)
 }
 
+#' An Efficient Kernel K-Means Algorithm
+#' @name kkmeans
+#'
+#' @description Performs kernel k-means with the specified kernel using an
+#' algorithm similar to Hartigan and Wong's k-means algorithm.
+#'
+#' @param data data to cluster
+#' @param k the number of clusters
+#' @param kern the kernel to use, one of ('gaussian', 'poly'), can use first
+#' letter
+#' @param params parameters to pass to kernel function.
 #' @export
 kkmeans <- function(data, k, kern, param, iter_max = 1000L) {
-    .Call(`_kkmeans_kkmeans`, data, k, kern, param, iter_max)
+    .Call('_kkmeans_kkmeans', PACKAGE = 'kkmeans', data, k, kern, param, iter_max)
 }
 

@@ -9,6 +9,17 @@ void kcluster(double x[], int n, int p, int k, double h, int iter_max,
 double kernel_gaussian(int i, int j, double x[], int n, int p, double sigmasq);
 double kernel_poly(int i, int j, double x[], int n, int p, double h);
 
+//' An Efficient Kernel K-Means Algorithm
+//' @name kkmeans
+//'
+//' @description Performs kernel k-means with the specified kernel using an
+//' algorithm similar to Hartigan and Wong's k-means algorithm.
+//'
+//' @param data data to cluster
+//' @param k the number of clusters
+//' @param kern the kernel to use, one of ('gaussian', 'poly'), can use first
+//' letter
+//' @param params parameters to pass to kernel function.
 //' @export
 // [[Rcpp::export]]
 List kkmeans(NumericMatrix data, int k, String kern, double param, int iter_max = 1000) {
@@ -37,8 +48,6 @@ List kkmeans(NumericMatrix data, int k, String kern, double param, int iter_max 
 
   kcluster(x, n, p, k, param, iter_max, kernel, mu, sse, ic1);
 
-  // This is a hack because there is no clear way to convert a pointer to a
-  // Vector object?
   IntegerVector cluster_out(n);
   for (int i = 0; i < n; i++)
     cluster_out[i] = ic1[i] + 1;
