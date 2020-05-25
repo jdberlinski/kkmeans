@@ -5,17 +5,6 @@
 
 using namespace Rcpp;
 
-// timesTwo
-int timesTwo(int x);
-RcppExport SEXP _kkmeans_timesTwo(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(timesTwo(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 // kkmeans
 List kkmeans(NumericMatrix data, int k, String kern, double param, int iter_max);
 RcppExport SEXP _kkmeans_kkmeans(SEXP dataSEXP, SEXP kSEXP, SEXP kernSEXP, SEXP paramSEXP, SEXP iter_maxSEXP) {
@@ -33,7 +22,6 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_kkmeans_timesTwo", (DL_FUNC) &_kkmeans_timesTwo, 1},
     {"_kkmeans_kkmeans", (DL_FUNC) &_kkmeans_kkmeans, 5},
     {NULL, NULL, 0}
 };

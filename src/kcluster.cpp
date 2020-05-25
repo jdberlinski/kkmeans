@@ -42,18 +42,20 @@ void kcluster(double x[], int n, int p, int k, double h, int iter_max,
     double (*kernel)(int, int, double[], int, int, double),
     double mu[], double sse[], int ic1[])
 {
-  double* an1        = (double *) S_alloc( k , sizeof(double) );
-  double* an2        = (double *) S_alloc( k , sizeof(double) );
-  double* d          = (double *) S_alloc( n , sizeof(double) );
-  double* fo1        = (double *) S_alloc( n , sizeof(double) );
-  double* fo2        = (double *) S_alloc( n , sizeof(double) );
-  double* kern_cross = (double *) S_alloc( k , sizeof(double) );
+  // I'm not sure if this is really necessary, but it's the safest option, at
+  // least. R will allocate the memory (and initialize to 0, then clear it after
+  double* an1        = (double *) S_alloc(k, sizeof(double));
+  double* an2        = (double *) S_alloc(k, sizeof(double));
+  double* d          = (double *) S_alloc(n, sizeof(double));
+  double* fo1        = (double *) S_alloc(n, sizeof(double));
+  double* fo2        = (double *) S_alloc(n, sizeof(double));
+  double* kern_cross = (double *) S_alloc(k, sizeof(double));
 
-  int* ic2   = (int *) S_alloc( n , sizeof(int) );
-  int* ncp   = (int *) S_alloc( k , sizeof(int) );
-  int* itran = (int *) S_alloc( k , sizeof(int) );
-  int* live  = (int *) S_alloc( k , sizeof(int) );
-  int* n_k   = (int *) S_alloc( k , sizeof(int) );
+  int* ic2   = (int *) S_alloc(n, sizeof(int));
+  int* ncp   = (int *) S_alloc(k, sizeof(int));
+  int* itran = (int *) S_alloc(k, sizeof(int));
+  int* live  = (int *) S_alloc(k, sizeof(int));
+  int* n_k   = (int *) S_alloc(k, sizeof(int));
 
   double* kernel_matrix = (double *) S_alloc( n*n , sizeof(double));
   double big = 1.0E+10;
@@ -124,7 +126,7 @@ void kcluster(double x[], int n, int p, int k, double h, int iter_max,
 
   for( l = 0; l < k; l++ )
     if( n_k[l] == 0 )
-      error("[ERROR] Cluster %d has 0 observations. Exiting...\n Possible bad starting seed.\n", l);
+      error("Error: Cluster %d has 0 observations. Exiting...\n Possible bad starting seed.\n", l);
 
   for( l = 0; l < k; l++ )
   {
@@ -552,16 +554,9 @@ int get_index(int i, int j, int n)
 
 int rand_dunif(int r)
 {
-  int ans = -1;
-  double di;
   GetRNGstate();
   double u = unif_rand();
   PutRNGstate();
-  for( int i = 0; i < r; i++ )
-  {
-    di = (double) i;
-    if( u >= di / r && u < (di + 1) / r)
-      ans = i;
-  }
-  return(ans);
+
+  return( trunc(u * r) );
 }
