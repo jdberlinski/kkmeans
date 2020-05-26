@@ -7,7 +7,8 @@ similar to [Hartigan and Wong (1979)][1]
 ## Installation
 In the extracted directory:
 ```{R}
-$ R -e 'devtools::install()'
+devtools::build()
+devtools::install()
 ```
 
 ## Usage
