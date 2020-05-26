@@ -22,7 +22,12 @@ double kernel_poly(int i, int j, double x[], int n, int p, double h);
 //' @param params parameters to pass to kernel function.
 //' @export
 // [[Rcpp::export]]
-List kkmeans(NumericMatrix data, int k, String kern, double param, int iter_max = 1000) {
+List kkmeans(NumericMatrix data, int k, String kern, double param, int iter_max = 1000)
+{
+  // TODO: Rcpp just rewrites this to some other c++ code. Remove the Rcpp
+  // dependency and just write what Rcpp is doing for (slightly) less cryptic
+  // debugging
+  // It will also make for an easier time writing the R bits
 
   int n = data.nrow();
   int p = data.ncol();
