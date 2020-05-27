@@ -22,6 +22,8 @@ double kernel_poly(int i, int j, double x[], int n, int p, double h);
 SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max)
 {
   SEXP dims = getAttrib(data, R_DimSymbol);
+  /* TODO:  */
+  /* SEXP param_names = getAttrib(param, R_NamesSymbol); */
   SEXP cluster_out, mu_out, sse_out, ret_list;
 
   if( !isReal(data) )
@@ -55,10 +57,13 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max)
   double (*kernel)(int, int, double[], int, int, double);
   kernel = NULL;
 
-  char* kern_string = CHAR(STRING_ELT(kern, 0));
+  const char* kern_string = CHAR(STRING_ELT(kern, 0));
+  /* const char* sigmasq; */
 
   if( strcmp(kern_string, "gaussian") == 0 || strcmp(kern_string, "g") == 0 )
+  {
     kernel = &kernel_gaussian;
+  }
   else if( strcmp(kern_string, "poly") == 0 || strcmp(kern_string, "p") == 0 )
     kernel = &kernel_poly;
   else
