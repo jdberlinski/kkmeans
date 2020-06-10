@@ -95,6 +95,48 @@ void kcluster(double x[], int n, int p, int k, double h, int iter_max,
    *      = k(x, x) - 2k(x, c) + k(c, c)
    */
 
+  /* int init_clust = rand_dunif(n); */
+  /* int* init_centers = (int *) S_alloc(k, sizeof(int)); */
+  /* init_centers[0] = init_clust; */
+  /* double* dist_kpp = (double *) S_alloc(, sizeof(int)); */
+  /* double* dist_kpp2 = (double *) S_alloc(, sizeof(int)); */
+  /* int current_center = 0; */
+
+  /* double t_dist = big; */
+
+  /* for (i = 0; i < n; i++) */
+  /* { */
+  /*   /1* ic1 is initially 0 *1/ */
+  /*   current_clust = ic1[i]; */
+  /*   current_center = init_centers[current_clust]; */
+  /*   dist_kpp = kernel_matrix[get_index(i, i, n)] - */
+  /*     2 * kernel_matrix[get_index(i, current_center, n)] + */
+  /*     kernel_matrix[get_index(current_clust, current_clust, n)]; */
+
+  /*   dist_kpp[i] *= dist_kpp[i]; */
+
+  /*   dist_kpp2[i] = big; */
+  /*   n_k[0]++; */
+  /* } */
+
+  /* for (j = 0; j < k; j++) */
+  /* { */
+  /*   GetRNGState(); */
+  /*   rmultinom(1, dist_kpp, n, &init_centers[j]); */
+  /*   PutRNGState(); */
+
+  /*   for (i = 0; i < n; i++) */
+  /*   { */
+  /*     current_clust = ic1[i]; */
+  /*     t_dist = kernel_matrix[get_index(i, i, n)] - */
+  /*       2 * kernel_matrix[get_index(i, current_center, n)] + */
+  /*       kernel_matrix[get_index(current_clust, current_clust, n)]; */
+
+
+  /*   } */
+  /* } */
+
+
 
   /* initialize the last term */
   for( l = 0; l < k; l++ )

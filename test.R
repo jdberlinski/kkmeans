@@ -1,7 +1,7 @@
 library(kkmeans)
 library(microbenchmark)
 
-dpath <- "clustering_benchmarks/graves/"
+dpath <- "data/clustering_benchmarks/graves/"
 
 ring <- read.table(paste0(dpath, "ring.data.gz"), header = FALSE)
 line <- read.table(paste0(dpath, "line.data.gz"), header = FALSE)
