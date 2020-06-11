@@ -7,8 +7,8 @@
  */
 #include <math.h>
 
-double kernel_gaussian(int i, int j, double x[], int n, int p, double sigmasq);
-double kernel_poly(int i, int j, double x[], int n, int p, double h);
+double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq);
+double kernel_poly(int i, int j, double *x, int n, int p, double h);
 
 /*
  *  Gaussian RBF kernel
@@ -22,13 +22,13 @@ double kernel_poly(int i, int j, double x[], int n, int p, double h);
  * @param sigmasq tuning parameter
  * @return the kernel evaluated at the two points
  */
-double kernel_gaussian(int i, int j, double x[], int n, int p, double sigmasq)
+double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq)
 {
   double norm = 0.;
-  for( int r = 0 ; r < p ; r++ )
+  for (int r = 0 ; r < p ; r++)
     norm += (x[i + r*n] - x[j + r*n]) * (x[i + r*n] - x[j + r*n]);
 
-  return( exp(-0.5 * norm / sigmasq) );
+  return (exp(-0.5 * norm / sigmasq));
 }
 
 /*
@@ -43,11 +43,11 @@ double kernel_gaussian(int i, int j, double x[], int n, int p, double sigmasq)
  * @param p tuning parameter
  * @return the kernel evaluated at the two points
  */
-double kernel_poly(int i, int j, double x[], int n, int p, double h)
+double kernel_poly(int i, int j, double *x, int n, int p, double h)
 {
   double prod = 0.;
-  for( int r = 0; r < p; r++ )
+  for (int r = 0; r < p; r++)
     prod += x[i + r*n] * x[j + r*n];
 
-  return( pow(prod + 1, h) );
+  return (pow(prod + 1, h));
 }

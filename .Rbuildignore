@@ -1,3 +1,5 @@
 ^LICENSE\.md$
 tags
 .Rprofile
+^.*\.Rproj$
+^\.Rproj\.user$
