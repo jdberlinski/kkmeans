@@ -128,9 +128,9 @@ void kcluster(double *x,
 
   for (j = 1; j < k; j++)
   {
-    GetRNGState();
+    GetRNGstate();
     rmultinom(1, dist_kpp, n, &init_centers[j]);
-    PutRNGState();
+    PutRNGstate();
 
     current_clust = init_centers[j];
 
