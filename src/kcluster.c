@@ -20,6 +20,7 @@ void optrak(double *x, double *mu, double *sse, double *an1, double *an2, int *n
 void qtrank(double *x, double *mu, double *sse, double *an1, double *an2, int *n_k, int n, int p,
     int k, int *ic1, int *ic2, int *ncp, int *itran, int *indx, double *d, int *live,
     double *kern_cross, double *kernel_matrix, double *fo1, double *fo2, double h);
+int rand_multinom(int n, double *probs);
 /*
  * The main clustering algorithm, with the goal of dividing n observations into
  * k clusters such that the WSS (in feature space) is minimized
@@ -72,15 +73,15 @@ void kcluster(double *x,
   /* original cluster assignment here */
 
   /* randomize the clusters */
-  /* for (j = 0; j < n; j++) */
-  /* { */
-  /*   current_clust = rand_dunif(k); */
+  for (j = 0; j < n; j++)
+  {
+    current_clust = rand_dunif(k);
 
-  /*   n_k[current_clust]++; */
+    n_k[current_clust]++;
 
-  /*   ic1[j] = current_clust; */
-  /*   ic2[j] = (current_clust + 1) % k; */
-  /* } */
+    ic1[j] = current_clust;
+    ic2[j] = (current_clust + 1) % k;
+  }
 
 
   for (i = 0; i < n; i++)
@@ -100,68 +101,76 @@ void kcluster(double *x,
    *      = k(x, x) - 2k(x, c) + k(c, c)
    */
 
+  /*
+   * This works in the sense that it doesn't give a segfault.
+   * It doesn't work in the sense that it never gives the correct results.
+   */
+
   /* new cluster assignment using kmeans++ */
 
-  int init_clust = rand_dunif(n);
-  int* init_centers = (int *) S_alloc(k, sizeof(int));
-  init_centers[0] = init_clust;
-  double* dist_kpp = (double *) S_alloc(n, sizeof(int));
-  double* dist_kpp2 = (double *) S_alloc(n, sizeof(int));
-  int current_center = 0;
+  /* int init_clust = rand_dunif(n); */
+  /* int* init_centers = (int *) S_alloc(k, sizeof(int)); */
+  /* init_centers[0] = init_clust; */
+  /* double* dist_kpp = (double *) S_alloc(n, sizeof(double)); */
+  /* double* dist_kpp2 = (double *) S_alloc(n, sizeof(double)); */
+  /* int current_center = 0; */
 
-  double t_dist = big;
+  /* double t_dist = big; */
 
-  for (i = 0; i < n; i++)
-  {
-    /* ic1 is initially 0 */
-    current_clust = ic1[i];
-    current_center = init_centers[current_clust];
-    dist_kpp[i] = kernel_matrix[get_index(i, i, n)] -
-      2 * kernel_matrix[get_index(i, current_center, n)] +
-      kernel_matrix[get_index(current_center, current_center, n)];
+  /* for (i = 0; i < n; i++) */
+  /* { */
+  /*   /1* ic1 is initially 0 *1/ */
+  /*   current_clust = ic1[i]; */
+  /*   current_center = init_centers[current_clust]; */
+  /*   dist_kpp[i] = kernel_matrix[get_index(i, i, n)] - */
+  /*     2 * kernel_matrix[get_index(i, current_center, n)] + */
+  /*     kernel_matrix[get_index(current_center, current_center, n)]; */
 
-    dist_kpp[i] *= dist_kpp[i];
+  /*   dist_kpp[i] *= dist_kpp[i]; */
 
-    dist_kpp2[i] = big;
-    n_k[0]++;
-  }
+  /*   dist_kpp2[i] = big; */
+  /*   n_k[0]++; */
+  /* } */
 
-  for (j = 1; j < k; j++)
-  {
-    GetRNGstate();
-    rmultinom(1, dist_kpp, n, &init_centers[j]);
-    PutRNGstate();
+  /* for (j = 1; j < k; j++) */
+  /* { */
+  /*   /1* TODO: either need to figure out how to get rmultinom to work or write a */
+  /*    * faster in-house function *1/ */
+  /*   /1* GetRNGstate(); *1/ */
+  /*   /1* rmultinom(1, dist_kpp, n, &init_centers[j]); *1/ */
+  /*   /1* PutRNGstate(); *1/ */
+  /*   init_centers[j] = rand_multinom(n, dist_kpp); */
 
-    current_clust = init_centers[j];
+  /*   current_clust = init_centers[j]; */
 
-    for (i = 0; i < n; i++)
-    {
-      // t_dist is the distance from the point to its current center
-      // but I already have that, so I need to compute the distance from each
-      // point to the newly chosen center.
-      // The distance from the point to its current center is going to be stored
-      // in the dist_kpp matrix
-      t_dist = kernel_matrix[get_index(i, i, n)] -
-        2 * kernel_matrix[get_index(i, current_center, n)] +
-        kernel_matrix[get_index(current_clust, current_clust, n)];
+  /*   for (i = 0; i < n; i++) */
+  /*   { */
+  /*     // t_dist is the distance from the point to its current center */
+  /*     // but I already have that, so I need to compute the distance from each */
+  /*     // point to the newly chosen center. */
+  /*     // The distance from the point to its current center is going to be stored */
+  /*     // in the dist_kpp matrix */
+  /*     t_dist = kernel_matrix[get_index(i, i, n)] - */
+  /*       2 * kernel_matrix[get_index(i, current_center, n)] + */
+  /*       kernel_matrix[get_index(current_clust, current_clust, n)]; */
 
-      t_dist *= t_dist;
+  /*     t_dist *= t_dist; */
 
-      if (t_dist < dist_kpp[i])
-      {
-        ic2[i] = ic1[i];
-        ic1[i] = current_clust;
-        dist_kpp2[i] = dist_kpp[i];
-        dist_kpp[i] = t_dist;
-      }
-      else if (t_dist < dist_kpp2[i])
-      {
-        ic2[i] = current_clust;
-        dist_kpp2[i] = t_dist;
-      }
+  /*     if (t_dist < dist_kpp[i]) */
+  /*     { */
+  /*       ic2[i] = ic1[i]; */
+  /*       ic1[i] = current_clust; */
+  /*       dist_kpp2[i] = dist_kpp[i]; */
+  /*       dist_kpp[i] = t_dist; */
+  /*     } */
+  /*     else if (t_dist < dist_kpp2[i]) */
+  /*     { */
+  /*       ic2[i] = current_clust; */
+  /*       dist_kpp2[i] = t_dist; */
+  /*     } */
 
-    }
-  }
+  /*   } */
+  /* } */
 
 
 
@@ -645,4 +654,27 @@ int rand_dunif(int r)
   PutRNGstate();
 
   return (trunc(u * r));
+}
+
+int rand_multinom(int n, double *probs)
+{
+  /* make the cdf */
+  double *cdf = (double *) S_alloc(n + 1, sizeof(double));
+
+  GetRNGstate();
+  double u = unif_rand();
+  PutRNGstate();
+
+  for (int i = 1; i <= n; i++)
+    cdf[i] = cdf[i - 1] + probs[i];
+
+  for (int i = 1; i <= n; i++)
+  {
+    if (u <= cdf[i] && u > cdf[i - 1])
+    {
+      return i;
+    }
+  }
+  /* this should never happen */
+  return -1;
 }

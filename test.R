@@ -1,3 +1,7 @@
+unload_all()
+install()
+
+
 library(kkmeans)
 library(microbenchmark)
 
