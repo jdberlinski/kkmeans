@@ -22,9 +22,10 @@ double kernel_poly(int i, int j, double *x, int n, int p, double h);
 SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max)
 {
   SEXP dims = getAttrib(data, R_DimSymbol);
-  /* TODO:  */
-  /* SEXP param_names = getAttrib(param, R_NamesSymbol); */
-  SEXP cluster_out, mu_out, sse_out, ret_list;
+  SEXP cluster_out;
+  SEXP mu_out;
+  SEXP sse_out;
+  SEXP ret_list;
 
   if (!isReal(data))
     error("Error: `data` must be a double vector.");
@@ -44,22 +45,21 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max)
     error("Error: `iter_max` must be an integer of length one.");
 
   /* get the variables from R */
-  int j;
-  int n         = INTEGER(dims)[0];
-  int p         = INTEGER(dims)[1];
-  int *imax_ptr = INTEGER(iter_max);
-  int *k_ptr    = INTEGER(centers);
-  double *h_ptr = REAL(param);
+  int     j;
+  int     n        = INTEGER(dims)[0];
+  int     p        = INTEGER(dims)[1];
+  int    *imax_ptr = INTEGER(iter_max);
+  int    *k_ptr    = INTEGER(centers);
+  double *h_ptr    = REAL(param);
 
-  int imax = *imax_ptr;
-  int k = *k_ptr;
-  double h = *h_ptr;
+  int    imax = *imax_ptr;
+  int    k    = *k_ptr;
+  double h    = *h_ptr;
 
   double (*kernel)(int, int, double[], int, int, double);
   kernel = NULL;
 
   const char *kern_string = CHAR(STRING_ELT(kern, 0));
-  /* const char* sigmasq; */
 
   if (strcmp(kern_string, "gaussian") == 0 || strcmp(kern_string, "g") == 0)
     kernel = &kernel_gaussian;
@@ -71,7 +71,7 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max)
   double *x   = (double *) S_alloc(n * p, sizeof(double));
   double *mu  = (double *) S_alloc(k * p, sizeof(double));
   double *sse = (double *) S_alloc(k, sizeof(double));
-  int *ic1    = (int *) S_alloc(n, sizeof(int));
+  int    *ic1 = (int *) S_alloc(n, sizeof(int));
 
   /* set the variables in C */
   x = REAL(data);
@@ -79,13 +79,14 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max)
   kcluster(x, n, p, k, h, imax, kernel, mu, sse, ic1);
 
   /* Create some return values for R */
-  PROTECT(cluster_out = allocVector(INTSXP, n) );
-  PROTECT(mu_out = allocMatrix(REALSXP, k, p) );
-  PROTECT(sse_out = allocVector(REALSXP, k) );
-  PROTECT(ret_list = allocVector(VECSXP, 3) );
+  PROTECT(cluster_out = allocVector(INTSXP , n));
+  PROTECT(mu_out      = allocMatrix(REALSXP, k, p));
+  PROTECT(sse_out     = allocVector(REALSXP, k));
+  PROTECT(ret_list    = allocVector(VECSXP , 3));
 
-  double *pmu, *psse;
-  int *pcluster;
+  double *pmu;
+  double *psse;
+  int    *pcluster;
 
   pcluster = INTEGER(cluster_out);
   for (j = 0; j < n; j++)
