@@ -21,9 +21,21 @@ ring_bench = microbenchmark(
   kernlab = kernlab::kkmeans(as.matrix(ring), 2, "polydot",
                              kpar = list(degree = 2, offset = 1, scale = 1))
 )
+# this is the function that puts everything together in a LaTeX string, one
+# caveat with it is that it assumes the first row of the summary table from
+# microbench is my method and the second is the other method (and those are the
+# only two methods)
+tconcat <- function(curr, newdata, name, mine = "kkmeans", theirs = "kernlab", end = F) {
+  mine <- paste0(mine, " & ")
+  theirs <- paste0(theirs, " & ")
 
-tconcat <- function(curr, newdata, name, mine = "kkmeans", theirs = "kernlab") {
+  curr <- paste0(curr, mine, paste(summary(newdata)[1, 2:7], collapse = " & "), "\\\\ \n")
+  if (end)
+    curr <- paste0(curr, theirs, paste(summary(newdata)[2, 2:7], collapse = " & "), "\\\\ \n")
+  else
+    curr <- paste0(curr, theirs, paste(summary(newdata)[2, 2:7], collapse = " & "), "\\\\")
 
+  return(curr)
 }
 
 
@@ -46,4 +58,21 @@ res_para <- kkmeans(as.matrix(para), 2, 'g', .7)
 plot(para, col = res_para$cluster)
 res_para <- kernlab::kkmeans(as.matrix(para), 2, "rbfdot", kpar = list(sigma = 1 / 0.7))
 plot(para, col = res_para@.Data)
+
+# this is the function that puts everything together in a LaTeX string, one
+# caveat with it is that it assumes the first row of the summary table from
+# microbench is my method and the second is the other method (and those are the
+# only two methods)
+tconcat <- function(curr, newdata, name, mine = "kkmeans", theirs = "kernlab", end = F) {
+  mine <- paste0(mine, " & ")
+  theirs <- paste0(theirs, " & ")
+
+  curr <- paste0(curr, mine, paste(summary(newdata)[1, 2:7], collapse = " & "), "\\\\ \n")
+  if (end)
+    curr <- paste0(curr, theirs, paste(summary(newdata)[2, 2:7], collapse = " & "), "\\\\ \n")
+  else
+    curr <- paste0(curr, theirs, paste(summary(newdata)[2, 2:7], collapse = " & "), "\\\\")
+
+  return(curr)
+}
 
