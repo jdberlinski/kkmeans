@@ -81,12 +81,13 @@ void kcluster(double *x,
   }
 
 
+  /* compute the kernel matrix for each of the pairs of observations */
   for (i = 0; i < n; i++)
   {
     for (j = 0; j <= i; j++)
     {
       kernel_matrix[get_index(i, j, n)] = kernel(i, j, x, n, p, h);
-      kernel_matrix[get_index(j, i, n)] = kernel(i, j, x, n, p, h);
+      kernel_matrix[get_index(j, i, n)] = kernel_matrix[get_index(i, j, n)];
     }
   }
 
@@ -96,10 +97,16 @@ void kcluster(double *x,
     kern_cross[l] = 0.;
 
     for (iw = 0; iw < n; iw++)
+    {
       if (ic1[iw] == l)
+      {
         for (iu = 0; iu < n; iu++)
+        {
           if (ic1[iu] == l)
             kern_cross[l] += kernel_matrix[get_index(iw, iu, n)];
+        }
+      }
+    }
   }
 
   /* update cluster centers to be the average of points contained within them */
@@ -143,7 +150,6 @@ void kcluster(double *x,
 
     itran[l] = 1;
     ncp[l] = -1;
-
   }
 
   indx[0] = 0;
@@ -154,7 +160,6 @@ void kcluster(double *x,
      * re-allocated, if necessary, to the cluster that will induce the maximum
      * reduction in within-cluster sum of squares */
 
-    /* printf("optra\n"); */
     optrak(x, mu, sse, an1, an2, n_k, n, p, k, ic1, ic2, ncp, itran, indx, d, live,
         kern_cross, kernel_matrix, fo1, fo2, h);
 
@@ -162,7 +167,6 @@ void kcluster(double *x,
     if (indx[0] == n)
       break;
 
-    /* printf("qtran\n"); */
     qtrank(x, mu, sse, an1, an2, n_k, n, p, k, ic1, ic2, ncp, itran, indx, d, live,
         kern_cross, kernel_matrix, fo1, fo2, h);
 
