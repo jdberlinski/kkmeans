@@ -40,48 +40,75 @@ void kcluster(double *x,
               double *sse,
               int    *ic1)
 {
-  double *an1        = (double *) S_alloc(k, sizeof(double));
-  double *an2        = (double *) S_alloc(k, sizeof(double));
-  double *d          = (double *) S_alloc(n, sizeof(double));
-  double *fo1        = (double *) S_alloc(n, sizeof(double));
-  double *fo2        = (double *) S_alloc(n, sizeof(double));
+  /* n_minus is n_k / (n_k - 1),  n_plus is n_k / (n_k + 1)*/
+  double *n_minus = (double *) S_alloc(k, sizeof(double));
+  double *n_plus  = (double *) S_alloc(k, sizeof(double));
+
+  /* loss is the current contribution to the SSE of an observation  */
+  double *loss = (double *) S_alloc(n, sizeof(double));
+
+  /* foi is the sum of the dot products in feature space for an observation with
+   * all other observations in its ith closest cluster*/
+  double *fo1 = (double *) S_alloc(n, sizeof(double));
+  double *fo2 = (double *) S_alloc(n, sizeof(double));
+
+  /* kern_cross is the sum of all pairs of dot products in each cluster */
   double *kern_cross = (double *) S_alloc(k, sizeof(double));
 
-  int *ic2   = (int *) S_alloc(n, sizeof(int));
-  int *ncp   = (int *) S_alloc(k, sizeof(int));
-  int *itran = (int *) S_alloc(k, sizeof(int));
-  int *live  = (int *) S_alloc(k, sizeof(int));
-  int *n_k   = (int *) S_alloc(k, sizeof(int));
+  /* ic2 is the second closest cluster */
+  int *ic2 = (int *) S_alloc(n, sizeof(int));
 
+  /* change tracks the last step at which the cluster was updated
+   * if in quick transfer stage, add n (since it comes after the optimal
+   * transfer stage)  */
+  int *change = (int *) S_alloc(k, sizeof(int));
+
+  /* itran is an indicator of a cluster being changed in the quick transfer
+   * stage */
+  int *itran = (int *) S_alloc(k, sizeof(int));
+
+  /* live is the indicator if a cluster is in the live set */
+  /* in the optimal transfer stage, a cluster is in the live set if live > i,
+   * since that means it HAS been updated in the past n optimal transfer stages */
+  int *live = (int *) S_alloc(k, sizeof(int));
+
+  /* n_k is the number of observations in a cluster */
+  int *n_k = (int *) S_alloc(k, sizeof(int));
+
+  /* kernel_matrix stores the value of the kernel function for each pair of
+   * observations */
   double *kernel_matrix = (double *) S_alloc(n*n, sizeof(double));
   double big = 1.0E+10;
 
-  int i, j, l, ij, ii, iw, iu;
-  double da, aa;
+  double da;
+  int ii;
 
-  /* need to fix this, pass an integer rather than an array */
-  int indx[1] = { 0 };
-  int current_clust = 0;
 
-  /*
-   * TODO: replace what is below with kmeans++
-   *
-   * likely make a new function in a separate file to make branching easier.
-   */
+  /* iteration variables */
+  /* Generally, i and j correspond to observations while l corresponds
+   * to clusters */
+  int i, j, l;
 
-  /* randomize the clusters */
-  for (j = 0; j < n; j++)
+  /* current cluster stores the cluster we are currently considering */
+  int curr_clust = 0;
+
+  /* n_transfer is the number of transfers that took place in the optimal
+   * transfer stage */
+  int n_transfer = -1;
+
+  /* First, randomly assign each point to a cluster */
+  for (i = 0; i < n; i++)
   {
-    current_clust = rand_dunif(k);
+    curr_clust = rand_dunif(k);
+    n_k[curr_clust]++;
 
-    n_k[current_clust]++;
+    ic1[i] = curr_clust;
+    ic2[i] = (curr_clust + 1) % k;
 
-    ic1[j] = current_clust;
-    ic2[j] = (current_clust + 1) % k;
   }
 
 
-  /* compute the kernel matrix for each of the pairs of observations */
+  /* Compute and store initial values */
   for (i = 0; i < n; i++)
   {
     for (j = 0; j <= i; j++)
@@ -91,99 +118,83 @@ void kcluster(double *x,
     }
   }
 
-  /* initialize the last term */
   for (l = 0; l < k; l++)
   {
     kern_cross[l] = 0.;
+    n_k[l] = 0;
 
-    for (iw = 0; iw < n; iw++)
+    for (i = 0; i < n; i++)
     {
-      if (ic1[iw] == l)
+      if (ic1[i] == l)
       {
-        for (iu = 0; iu < n; iu++)
+        n_k[l]++;
+        for (j = 0; j < n; j++)
         {
-          if (ic1[iu] == l)
-            kern_cross[l] += kernel_matrix[get_index(iw, iu, n)];
+          if (ic1[j] == l)
+            kern_cross[l] += kernel_matrix[get_index(i, j, n)];
         }
       }
     }
   }
 
-  /* update cluster centers to be the average of points contained within them */
   for (l = 0; l < k; l++)
   {
-    n_k[l] = 0;
-    for( j = 0; j < p; j++)
-      mu[l + j*k] = 0.;
-  }
-
-  for (i = 0; i < n; i++)
-  {
-    l = ic1[i];
-    n_k[l]++;
-    for (j = 0; j < p; j++)
-      mu[l + j*k] += x[i + j*n];
-  }
-
-  for (l = 0; l < k; l++)
-    if (n_k[l] == 0)
+    if (!n_k[l])
       error("Error: Cluster %d has 0 observations. Exiting...\n Possible bad starting seed.\n", l);
 
-  for (l = 0; l < k; l++)
-  {
-    aa = (double) n_k[l];
-
-    for (j = 0; j < p; j++)
-      mu[l + j*k] /= aa;
-
-    /* initialize an1, an2, itran, ncp
-     * an1[l] = n_k[l] / (n_k[l] - 1)
-     * an2[l] = n_k[l] / (n_k[l] + 1)
-     * itran[l] = 1 if cluster l is updated in the qtran step
-     *          = otherwise*/
-
-    an2[l] = aa / (aa + 1.);
-    if (aa > 1.)
-      an1[l] = aa / (aa - 1.);
+    if (n_k[l] == 1)
+      n_minus[l] = big;
     else
-      an1[l] = big;
+    {
+      n_minus[l] = n_k[l];
+      n_minus[l] /= (n_k[l] - 1);
+    }
+
+    n_plus[l] = (double) n_k[l];
+    n_plus[l] /= (n_k[l] + 1);
 
     itran[l] = 1;
-    ncp[l] = -1;
+    change[l] = -1;
   }
 
-  indx[0] = 0;
-
-  for (ij = 0; ; ij++)
+  for (int iter = 0; iter < iter_max; iter++)
   {
-    /* in this stage, there is only one pass through the data. each point is
-     * re-allocated, if necessary, to the cluster that will induce the maximum
-     * reduction in within-cluster sum of squares */
+    /* The optimal transfer stage passes through the data once, reallocating
+     * each point to the cluster that will yield the greatest reduction of
+     * within-cluster sum of squares */
 
-    optrak(x, mu, sse, an1, an2, n_k, n, p, k, ic1, ic2, ncp, itran, indx, d, live,
-        kern_cross, kernel_matrix, fo1, fo2, h);
+    n_transfer = optimal_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k,
+        ic1, ic2, change, itran, loss, live, kern_cross, kernel_matrix, fo1, fo2, h);
 
-    /* stop if no transfer took place in the last n optimal transfer steps */
-    if (indx[0] == n)
+    /* for(l = 0; l < k; l++) */
+    /* { */
+    /*   Rprintf("n_k[%d] = %d\n", l, n_k[l]); */
+    /* } */
+
+    /* if no transfer took place in the optimal transfer stage, then stop */
+    /* (because none of the points will be in the live set) */
+    if (!n_transfer)
       break;
 
-    qtrank(x, mu, sse, an1, an2, n_k, n, p, k, ic1, ic2, ncp, itran, indx, d, live,
-        kern_cross, kernel_matrix, fo1, fo2, h);
+    quick_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1, ic2, change,
+        itran, loss, live, kern_cross, kernel_matrix, fo1, fo2, h);
 
-    /* if there are only two clusters, there is no need to re-enter the optran
-     * stage */
+    /* for(l = 0; l < k; l++) */
+    /* { */
+    /*   Rprintf("n_k[%d] = %d\n", l, n_k[l]); */
+    /* } */
+
+    /* if there are only two clusters, there is no need to re-enter the optimal
+     * transfer stage */
     if (k == 2)
       break;
-    /* ncp has to be set to 0 before entering optra */
-    for (l = 0; l < k; l++)
-      ncp[l] = 0;
 
-    if (ij >= iter_max)
-      break;
+    /* change needs to be set back to zero before re-entering the optimal
+     * transfer stage */
+    for (l = 0; l < k; l++)
+      change[l] = 0;
   }
 
-  /* ifault error checking goes here */
-  /* compute the within-cluster ss for each clustr */
   for (l = 0; l < k; l++)
   {
     sse[l] = 0.;
@@ -210,6 +221,7 @@ void kcluster(double *x,
       sse[ii] += (da * da);
     }
   }
+
   return;
 }
 
@@ -238,169 +250,176 @@ void kcluster(double *x,
  * @param *fo1           - n work array
  * @param *fo2           - n work array
  */
-void optrak(double *x,
-            double *mu,
-            double *sse,
-            double *an1,
-            double *an2,
-            int    *n_k,
-            int     n,
-            int     p,
-            int     k,
-            int    *ic1,
-            int    *ic2,
-            int    *ncp,
-            int    *itran,
-            int    *indx,
-            double *d,
-            int    *live,
-            double *kern_cross,
-            double *kernel_matrix,
-            double *fo1,
-            double *fo2,
-            double  h)
+int optimal_transfer(double *x,
+                     double *mu,
+                     double *sse,
+                     double *n_minus,
+                     double *n_plus,
+                     int    *n_k,
+                     int     n,
+                     int     p,
+                     int     k,
+                     int    *ic1,
+                     int    *ic2,
+                     int    *change,
+                     int    *itran,
+                     double *loss,
+                     int    *live,
+                     double *kern_cross,
+                     double *kernel_matrix,
+                     double *fo1,
+                     double *fo2,
+                     double  h)
 {
+  /* c1 is the current closest cluster, c2 is the current second closest, and cl
+   * is the second closest for an observation upon entering this stage */
+  int c1, c2, cl;
 
-  int l, i, l1, l2, ll, j, al1, al2, iu;
-  double da, dc, de, M, alt, alw;
-  double fo_kern, self_kern, temp;
+  int i, j, l;
+
+  int flag = 0;
+
+  double M, temp;
+
+  double acc, fo_acc, self_kern;
+
   double big = 1.0E+10;
-  /* If cluster l is updated in the last qtran stage, it belongs to the live set
-   * throughout this stage, otherwise at each step  it is not in the live set if
-   * it has not been updated in the last M optra steps*/
+
   for (l = 0; l < k; l++)
-    if (itran[l] == 1) live[l] = n + 1;
+  {
+    if (itran[l])
+      live[l] = n + 1;
+  }
 
   for (i = 0; i < n; i++)
   {
     self_kern = kernel_matrix[get_index(i, i, n)];
-    indx[0]++;
-    l1 = ic1[i];
-    l2 = ic2[i];
-    ll = l2;
 
-    /* if point i is the only member of cluster l1, no transfer */
-    if (n_k[l1] > 1)
+    c1 = ic1[i];
+    c2 = ic2[i];
+    cl = c2;
+
+    /* skip this observation if it is the only member of its cluster */
+    if (n_k[c1] == 1) continue;
+
+    /* if cluster c1 has been updated in this stage, we need to recompute the
+     * loss for this observation */
+    if (1)//change[c1])
     {
-      /* if l1 has not yet been updated in this stage, no need to recompute d[i] */
-      if (ncp[l1] != 0)
+      acc = self_kern + 1. / (n_k[c1] * n_k[c1]) * kern_cross[c1];
+      fo_acc = 0;
+
+      for (j = 0; j < n; j++)
+        if (ic1[j] == c1) fo_acc += kernel_matrix[get_index(i, j, n)];
+
+      fo1[i] = fo_acc;
+      acc -= 2. / (n_k[c1]) * fo_acc;
+
+      loss[i] = acc * n_minus[c1];
+    }
+
+    /* this is the same thing as above, except with c2 */
+    if (1) //change[c2])
+    {
+      fo_acc = 0;
+
+      for (j = 0; j < n; j++)
+        if (ic1[j] == c2) fo_acc += kernel_matrix[get_index(i, j, n)];
+
+      fo2[i] = fo_acc;
+    }
+
+    /* acc = self_kern + 1. / (n_k[c2] * n_k[c2]) * kern_cross[c2]; */
+    /* acc -= 2. / (n_k[c2]) * fo2[i]; */
+    /* M = acc * n_plus[c2]; */
+    M = big;
+
+    for (l = 0; l < k; l++)
+    {
+      if (l == c1) continue;
+
+      /* check if this cluster has the minumum if either c1 or l is in the live
+       * set */
+      if (live[c1] > i || live[l] > i)
       {
-        de = self_kern + 1. / (n_k[l1] * n_k[l1]) * kern_cross[l1];
-        fo_kern = 0.;
-        for (iu = 0; iu < n; iu++)
-          if (ic1[iu] == l1)
-            fo_kern += kernel_matrix[get_index(i, iu, n)];
-        fo1[i] = fo_kern;
-        de -= 2. / (n_k[l1]) * fo_kern;
-        d[i] = de * an1[l1];
-      }
+        acc = self_kern + 1. / (n_k[l] * n_k[l]) * kern_cross[l];
 
-      /* THis might not be necessary, but check if l2 has been updated at this
-       * stage, and recompute (might be a big brain move though) */
-      if (ncp[l2] != 0)
-      {
-        fo_kern = 0.;
-        for (iu = 0; iu < n; iu++)
-          if (ic1[iu] == l2)
-            fo_kern += kernel_matrix[get_index(i, iu, n)];
-        fo2[i] = fo_kern;
-      }
+        fo_acc = 0;
+        for (j = 0; j < n; j++)
+          if (ic1[j] == l) fo_acc += kernel_matrix[get_index(i, j, n)];
 
-      /* find the cluster with minimum M*/
+        acc -= 2. / (n_k[l]) * fo_acc;
 
-      da = self_kern + 1. / (n_k[l2] * n_k[l2]) * kern_cross[l2];
-      fo_kern = fo2[i];
-      da -= 2. / (n_k[l2]) * fo_kern;
-      M = da * an2[l2];
-
-
-      for (l = 0; l < k; l++)
-      {
-        /* if live[l1] <= i, then l1 is not in the live set.
-         * f this is true, we only need to consider clusters that are in the
-         * live set for possible transfers of point i. Otherwise we need to
-         * consider all possible clusters */
-        if ((i < live[l1] || i < live[l2]) && (l != l1 && l != ll))
+        if (acc * n_plus[l] < M)
         {
-          dc = self_kern + 1. / (n_k[l] * n_k[l]) * kern_cross[l];
-          fo_kern = 0.;
-          for (iu = 0; iu < n; iu++)
-            if (ic1[iu] == l)
-              fo_kern += kernel_matrix[get_index(i, iu, n)];
-          dc -= 2. / (n_k[l]) * fo_kern;
-
-          if (dc*an2[l] < M)
-          {
-            M = dc * an2[l];
-            l2 = l;
-            fo2[i] = fo_kern;
-          }
+          M = acc * n_plus[l];
+          c2 = l;
+          fo2[i] = fo_acc;
         }
-      }
-
-      /* if no transfer is necesary, l2 is the new ic2 */
-      if (d[i] <= M)
-      {
-        ic2[i] = l2;
-      } else
-      {
-        indx[0] = 0;
-        live[l1] = n + i;
-        live[l2] = n + i;
-        ncp[l1] = i;
-        ncp[l2] = i;
-        al1 = n_k[l1];
-        alw = al1 - 1.;
-        al2 = n_k[l2];
-        alt = al2 + 1.;
-
-        /* the c computation for updating means is the same */
-        for (j = 0; j < p; j++)
-        {
-          mu[l1 + j*k] = (mu[l1 + j*k] * al1 - x[i + j*n]) / alw;
-          mu[l2 + j*k] = (mu[l2 + j*k] * al2 + x[i + j*n]) / alt;
-        }
-
-        n_k[l1]--;
-        n_k[l2]++;
-        al1 = n_k[l1];
-        alw = al1 - 1.;
-        al2 = n_k[l2];
-        alt = al2 + 1.;
-        kern_cross[l1] -= 2*fo1[i] + self_kern;
-        kern_cross[l2] += 2*fo2[i] + 2*self_kern;
-        an2[l1] = alw / al1;
-
-        if (alw > 1.)
-          an1[l1] = alw / (alw - 1.);
-        else
-          an1[l1] = big;
-
-        an1[l2] = alt / al2;
-        an2[l2] = alt / (alt + 1.);
-
-        ic1[i] = l2;
-        ic2[i] = l1;
-
-        temp = fo2[i];
-        fo2[i] = fo1[i] - self_kern;
-        fo1[i] = temp + self_kern;
       }
     }
 
-    if (indx[0] == n)
+    if (loss[i] <= M)
+      ic2[i] = c2;
+    else
     {
-      return;
+      flag++;
+      live[c1] = n + i;
+      live[c2] = n + i;
+
+      itran[c1] = 1;
+      itran[c2] = 1;
+
+      change[c1] = i;
+      change[c2] = i;
+
+
+      kern_cross[c1] -= 2*fo1[i] + self_kern;
+      kern_cross[c2] += 2*fo2[i] + 2*self_kern;
+
+      n_k[c1]--;
+      n_k[c2]++;
+
+      if (n_k[c1] <= 1)
+        n_minus[c1] = big;
+      else
+      {
+        n_minus[c1] = (double) n_k[c1];
+        n_minus[c1] /= (n_k[c1] - 1);
+      }
+
+      n_plus[c1] = (double) n_k[c1];
+      n_plus[c1] /= (n_k[c1] + 1);
+
+      if (n_k[c2] <= 1)
+        n_minus[c2] = big;
+      else
+      {
+        n_minus[c2] = (double) n_k[c2];
+        n_minus[c2] /= (n_k[c2] - 1);
+      }
+
+      n_plus[c2] = (double) n_k[c2];
+      n_plus[c2] /= (n_k[c2] + 1);
+
+      ic1[i] = c2;
+      ic2[i] = c1;
+
+      temp = fo2[i];
+      fo2[i] = fo1[i] - self_kern;
+      fo1[i] = temp + self_kern;
     }
+
+    /* if (indx[0] == n) */
+    /* { */
+    /*   return; */
+    /* } */
   }
 
   for (l = 0; l < k; l++)
-  {
-    itran[l] = 0;
     live[l] -= n;
-  }
 
-  return;
+  return flag;
 }
 
 /*
@@ -428,137 +447,141 @@ void optrak(double *x,
  * @param *fo1        - n work array
  * @param *fo2        - n work array
  */
-void qtrank(double *x,
-            double *mu,
-            double *sse,
-            double *an1,
-            double *an2,
-            int    *n_k,
-            int     n,
-            int     p,
-            int     k,
-            int    *ic1,
-            int    *ic2,
-            int    *ncp,
-            int    *itran,
-            int    *indx,
-            double *d,
-            int    *live,
-            double *kern_cross,
-            double *kernel_matrix,
-            double *fo1,
-            double *fo2,
-            double  h)
+void quick_transfer(double *x,
+                    double *mu,
+                    double *sse,
+                    double *n_minus,
+                    double *n_plus,
+                    int    *n_k,
+                    int     n,
+                    int     p,
+                    int     k,
+                    int    *ic1,
+                    int    *ic2,
+                    int    *change,
+                    int    *itran,
+                    double *loss,
+                    int    *live,
+                    double *kern_cross,
+                    double *kernel_matrix,
+                    double *fo1,
+                    double *fo2,
+                    double  h)
 {
-  /* in the optra stage, ncp indicates the step at which cluster l is last
-   * udpated. In the qtran stage, ncp is equal to the step at which cluster l is
-   * last updated plus n */
-  int icoun = 0, istep = 0;
-  int i, l1, l2, j, iu;
-  double da, dd, alt, alw, al1, al2;
-  double fo_kern, self_kern, temp;
+  int c1, c2;
+  int i, j;
   double big = 1.0E+10;
+  double self_kern;
+
+  int flag, nstep;
+
+  double acc, fo_acc, temp;
+
+  int *ls = (int *) S_alloc(k, sizeof(int));
+
+  for (int l = 0; l < k; l++)
+  {
+    if (itran[l])
+    {
+      ls[l] = 1;
+      itran[l] = 0;
+    }
+  }
+
+  nstep = 0;
 
   while (1)
   {
-
-    for (i  = 0; i < n; i++)
+    flag = 0;
+    for (i = 0; i < n; i++)
     {
-      icoun++;
-      istep++;
-
-
-      l1 = ic1[i];
-      l2 = ic2[i];
+      c1 = ic1[i];
+      c2 = ic2[i];
+      nstep++;
 
       self_kern = kernel_matrix[get_index(i, i, n)];
 
-      /* if point i is the only member of cluster l1, no transfer */
-      if (n_k[l1] > 1)
+      if (n_k[c1] == 1) continue;
+
+      if (1)//nstep <= change[c1])
       {
-        /* if ncp(l1) < istep, no need to recompute the distance from point i to
-         * cluster l1. note that if cluster l1 is the last update exactly n steps
-         * ago, we still need to compute the distance from point i to cluster l1 */
-        if (istep <= ncp[l1])
-        {
-          da = self_kern + 1. / (n_k[l1] * n_k[l1]) * kern_cross[l1];
-          fo_kern = 0.;
-          for (iu = 0; iu < n; iu++)
-            if (ic1[iu] == l1)
-              fo_kern += kernel_matrix[get_index(i, iu, n)];
-          fo1[i] = fo_kern;
-          da -= 2. / (n_k[l1]) * fo_kern;
-          d[i] = da * an1[l1];
-        }
+        acc = self_kern + 1. / (n_k[c1] * n_k[c1]) * kern_cross[c1];
+        fo_acc = 0;
 
-        /* same thing as optra, this might be dumb */
-        if (istep <= ncp[l2])
-        {
-          fo_kern = 0.;
-          for (iu = 0; iu < n; iu++)
-            if (ic1[iu] == l2)
-              fo_kern += kernel_matrix[get_index(i, iu, n)];
-          fo2[i] = fo_kern;
-        }
+        for (j = 0; j < n; j++)
+          if (ic1[j] == c1) fo_acc += kernel_matrix[get_index(i, j, n)];
 
-        /* if ncp(l1) <= istep and ncp(l2) <= istep, there will be no transfer of
-         * point i at this step */
-        if (istep < ncp[l1] || istep < ncp[l2])
-        {
-          dd = self_kern + 1. / (n_k[l2] * n_k[l2]) * kern_cross[l2];
-          fo_kern = fo2[i];
-          dd -= 2. / (n_k[l2]) * fo_kern;
+        fo1[i] = fo_acc;
+        acc -= 2. / (n_k[c1]) * fo_acc;
 
-          /* update cluster centers, ncp, nc, itran, an1, and an2, for cluster l1
-           * and l2. also update ic1[i] and ic2[i].
-           * note that if any updating occurs in this stage, indx is set bavk to 0 */
-          if (dd*an2[l2] < d[i])
-          {
-            icoun = 0;
-            indx[0] = 0;
-            itran[l1] = 1;
-            itran[l2] = 1;
-            ncp[l1] = istep + n;
-            ncp[l2] = istep + n;
-
-            al1 = n_k[l1];
-            alw = al1 - 1.;
-            al2 = n_k[l2];
-            alt = al2 + 1.;
-            for (j = 0; j < p; j++)
-            {
-              mu[l1 + j*k] = ( mu[l1 + j*k] * al1 - x[i + j*n] ) / alw;
-              mu[l2 + j*k] = ( mu[l2 + j*k] * al2 + x[i + j*n] ) / alt;
-            }
-
-            n_k[l1]--;
-            n_k[l2]++;
-            kern_cross[l1] -= 2*fo1[i] + self_kern;
-            kern_cross[l2] += 2*fo2[i] + 2*self_kern;
-            al1 = n_k[l1];
-            alw = al1 - 1.;
-            al2 = n_k[l2];
-            alt = al2 + 1.;
-            an2[l1] = alw / al1;
-            if (alw > 1.)
-              an1[l1] = alw / (alw - 1.);
-            else
-              an1[l1] = big;
-            an1[l2] = alt / al2;
-            an2[l2] = alt / (alt + 1.);
-            ic1[i] = l2;
-            ic2[i] = l1;
-            temp = fo2[i];
-            fo2[i] = fo1[i] - self_kern;
-            fo1[i] = temp + self_kern;
-          }
-        }
+        loss[i] = acc * n_minus[c1];
       }
 
-      /* if no re-allocation took place in the last n steps, return */
-      if (icoun == n)
-        return;
+      if (1)// nstep <= change[c2])
+      {
+        fo_acc = 0;
+
+        for (j = 0; j < n; j++)
+          if (ic1[j] == c2) fo_acc += kernel_matrix[get_index(i, j, n)];
+
+        fo2[i] = fo_acc;
+      }
+
+      if (!ls[c1] && !ls[c2]) continue;
+
+      acc = self_kern + 1. / (n_k[c2] * n_k[c2]) * kern_cross[c2];
+      fo_acc = fo2[i];
+      acc -= 2. / (n_k[c2]) * fo_acc;
+
+      if (acc * n_plus[c2] < loss[i])
+      {
+        flag = 1;
+
+        itran[c1] = 1;
+        itran[c2] = 1;
+
+        change[c1] = nstep + n;
+        change[c2] = nstep + n;
+
+        kern_cross[c1] -= 2*fo1[i] + self_kern;
+        kern_cross[c2] += 2*fo2[i] + self_kern;
+
+        n_k[c1]--;
+        n_k[c2]++;
+
+        if (n_k[c1] <= 1)
+          n_minus[c1] = big;
+        else
+        {
+          n_minus[c1] = (double) n_k[c1];
+          n_minus[c1] /= (n_k[c1] - 1);
+        }
+
+        n_plus[c1] = (double) n_k[c1];
+        n_plus[c1] /= (n_k[c1] + 1);
+
+        if (n_k[c2] <= 1)
+          n_minus[c2] = big;
+        else
+        {
+          n_minus[c2] = (double) n_k[c2];
+          n_minus[c2] /= (n_k[c2] - 1);
+        }
+
+        n_plus[c2] = (double) n_k[c2];
+        n_plus[c2] /= (n_k[c2] + 1);
+
+        ic1[i] = c2;
+        ic2[i] = c1;
+
+        temp = fo2[i];
+        fo2[i] = fo1[i] - self_kern;
+        fo1[i] = temp + self_kern;
+
+      }
     }
+
+    if (!flag) return;
   }
 }
 
