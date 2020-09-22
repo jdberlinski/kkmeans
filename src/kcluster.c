@@ -83,6 +83,8 @@ void kcluster(double *x,
   double da;
   int ii;
 
+  double fo;
+
 
   /* iteration variables */
   /* Generally, i and j correspond to observations while l corresponds
@@ -197,7 +199,27 @@ void kcluster(double *x,
 
   for (l = 0; l < k; l++)
   {
-    sse[l] = 0.;
+    sse[l] = 0;
+    for (i = 0; i < n; i++)
+    {
+      if (ic1[i] != l) continue;
+      sse[l] += kernel_matrix[get_index(i, i, n)];
+      sse[l] += 1. / (n_k[l] * n_k[l]) * kern_cross[l];
+      fo = 0.;
+      for (j = 0; j < n; j++)
+      {
+        if(ic1[j] != l) continue;
+        fo += kernel_matrix[get_index(i, j, n)];
+      }
+
+      fo /= n_k[l];
+      sse[l] -= 2*fo;
+    }
+  }
+
+  for (l = 0; l < k; l++)
+  {
+    /* sse[l] = 0.; */
     for (j = 0; j < p; j++)
       mu[l + j*k] = 0.;
   }
@@ -214,12 +236,12 @@ void kcluster(double *x,
     for (l = 0; l < k; l++)
       mu[l + j*k] /= (double) n_k[l];
 
-    for (i = 0; i < n; i++)
-    {
-      ii = ic1[i];
-      da = x[i + j*n] - mu[ii + j*k];
-      sse[ii] += (da * da);
-    }
+    /* for (i = 0; i < n; i++) */
+    /* { */
+    /*   ii = ic1[i]; */
+    /*   da = x[i + j*n] - mu[ii + j*k]; */
+    /*   sse[ii] += (da * da); */
+    /* } */
   }
 
   return;
