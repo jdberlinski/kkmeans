@@ -4,17 +4,27 @@
 \alias{kkmeans}
 \title{An Efficient Kernel K-Means Algorithm}
 \usage{
-kkmeans(data, k, kern = "g", param = 1, iter_max = 1000L)
+kkmeans(
+  data,
+  k = FALSE,
+  kern = "g",
+  param = 1,
+  jump = FALSE,
+  k_max = FALSE,
+  eta = FALSE,
+  iter_max = 1000L
+)
 }
 \arguments{
 \item{data}{data to cluster}
 
-\item{k}{the number of clusters}
+\item{k}{the number of clusters. if jump == TRUE, then this is ignored}
 
 \item{kern}{the kernel to use, one of ('gaussian', 'poly'), can use first
 letter}
 
-\item{params}{parameters to pass to kernel function.}
+\item{param}{value of parameter to pass to kernel function.(eg sigma in
+gaussian kernel)}
 }
 \description{
 Performs kernel k-means with the specified kernel using an
