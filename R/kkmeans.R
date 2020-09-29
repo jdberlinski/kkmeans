@@ -11,8 +11,7 @@
 #' @param param value of parameter to pass to kernel function.(eg sigma in
 #' gaussian kernel)
 #' @export
-kkmeans <- function(data, k = FALSE, kern = "g", param = 1, jump = FALSE,
-                    k_max = FALSE, eta = FALSE, iter_max = 1000L) {
+kkmeans <- function(data, k, kern = "g", param = 1, iter_max = 1000L) {
 
   valid_kerns = c("gaussian", "poly")
   valid_prefs = c("g", "p")
