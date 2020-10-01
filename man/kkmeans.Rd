@@ -4,16 +4,7 @@
 \alias{kkmeans}
 \title{An Efficient Kernel K-Means Algorithm}
 \usage{
-kkmeans(
-  data,
-  k = FALSE,
-  kern = "g",
-  param = 1,
-  jump = FALSE,
-  k_max = FALSE,
-  eta = FALSE,
-  iter_max = 1000L
-)
+kkmeans(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000L)
 }
 \arguments{
 \item{data}{data to cluster}
@@ -25,6 +16,11 @@ letter}
 
 \item{param}{value of parameter to pass to kernel function.(eg sigma in
 gaussian kernel)}
+
+\item{nstart}{number of times to run the algorithm. the run with the lowest
+total within cluster SSE (in feature space) will be returned}
+
+\item{iter_max}{the maximum number of iterations to allow}
 }
 \description{
 Performs kernel k-means with the specified kernel using an

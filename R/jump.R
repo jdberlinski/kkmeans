@@ -10,8 +10,7 @@
 #' @param eta
 #' @param iter_max
 #' @export
-jump_stat <- function(data, kern = "g", param = 1, k_max, eta,
-                           iter_max = 1000L) {
+jump_stat <- function(data, kern = "g", param = 1, k_max, eta, iter_max = 1000L) {
   valid_kerns = c("gaussian", "poly")
   valid_prefs = c("g", "p")
 
@@ -22,8 +21,6 @@ jump_stat <- function(data, kern = "g", param = 1, k_max, eta,
     warning("Converting data to matrix.")
     data <- as.matrix(data)
   }
-  if ( !is.integer(iter_max) )
-    iter_max <- as.integer(iter.max)
 
   n <- nrow(data)
   p <- ncol(data)
