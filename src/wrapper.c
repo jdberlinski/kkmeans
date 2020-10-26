@@ -1,9 +1,11 @@
 #include <Rinternals.h>
 #include <R.h>
 
-void kcluster(double *x, int n, int p, int k, double h, int iter_max,
-    double (*kernel)(int, int, double*, int, int, double),
-    double *mu, double *sse, int *ic1);
+void kcluster(double *x, int n, int p, int k, int iter_max,
+    double *kernel_matrix, double *mu, double *sse, int *ic1);
+void get_kernel_matrix(double *x, int n, int p, double h,
+                       double  (*kernel)(int, int, double*, int, int, double),
+                       double *kernel_matrix);
 double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq);
 double kernel_poly(int i, int j, double *x, int n, int p, double h);
 
@@ -68,15 +70,17 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max)
   else
     error("Error: `kern` is not recognized.");
 
-  double *x   = (double *) S_alloc(n * p, sizeof(double));
-  double *mu  = (double *) S_alloc(k * p, sizeof(double));
-  double *sse = (double *) S_alloc(k, sizeof(double));
+  double *x             = (double *) S_alloc(n * p, sizeof(double));
+  double *mu            = (double *) S_alloc(k * p, sizeof(double));
+  double *sse           = (double *) S_alloc(k, sizeof(double));
+  double *kernel_matrix = (double *) S_alloc(n * n, sizeof(double));
   int    *ic1 = (int *) S_alloc(n, sizeof(int));
 
   /* set the variables in C */
   x = REAL(data);
 
-  kcluster(x, n, p, k, h, imax, kernel, mu, sse, ic1);
+  get_kernel_matrix(x, n, p, h, kernel, kernel_matrix);
+  kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1);
 
   /* Create some return values for R */
   PROTECT(cluster_out = allocVector(INTSXP , n));

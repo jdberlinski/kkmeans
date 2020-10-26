@@ -22,9 +22,8 @@
  * @param  n        - number of data points
  * @param  p        - dimension of data
  * @param  k        - number of clusters
- * @param  h        - tuning parameter for kernel function
  * @param  iter_max - the maximum number of passes allowed
- * @param  kernel   - the kernel function to use
+ * @param  kernel_matrix   - the matrix containing all k(x, y) values
  * @param *mu       - k*p array of cluster centers
  * @param *sse      - k array of SSE for each cluster
  * @param *ic1      - n array of closest cluster indicator
@@ -33,9 +32,8 @@ void kcluster(double *x,
               int     n,
               int     p,
               int     k,
-              double  h,
               int     iter_max,
-              double  (*kernel)(int, int, double*, int, int, double),
+              double *kernel_matrix,
               double *mu,
               double *sse,
               int    *ic1)
@@ -77,7 +75,6 @@ void kcluster(double *x,
 
   /* kernel_matrix stores the value of the kernel function for each pair of
    * observations */
-  double *kernel_matrix = (double *) S_alloc(n*n, sizeof(double));
   double big = 1.0E+10;
 
   double da;
@@ -107,17 +104,6 @@ void kcluster(double *x,
     ic1[i] = curr_clust;
     ic2[i] = (curr_clust + 1) % k;
 
-  }
-
-
-  /* Compute and store initial values */
-  for (i = 0; i < n; i++)
-  {
-    for (j = 0; j <= i; j++)
-    {
-      kernel_matrix[get_index(i, j, n)] = kernel(i, j, x, n, p, h);
-      kernel_matrix[get_index(j, i, n)] = kernel_matrix[get_index(i, j, n)];
-    }
   }
 
   for (l = 0; l < k; l++)
@@ -166,7 +152,7 @@ void kcluster(double *x,
      * within-cluster sum of squares */
 
     n_transfer = optimal_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k,
-        ic1, ic2, change, itran, loss, live, kern_cross, kernel_matrix, fo1, fo2, h);
+        ic1, ic2, change, itran, loss, live, kern_cross, kernel_matrix, fo1, fo2);
 
     /* for(l = 0; l < k; l++) */
     /* { */
@@ -179,7 +165,7 @@ void kcluster(double *x,
       break;
 
     quick_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1, ic2, change,
-        itran, loss, live, kern_cross, kernel_matrix, fo1, fo2, h);
+        itran, loss, live, kern_cross, kernel_matrix, fo1, fo2);
 
     /* for(l = 0; l < k; l++) */
     /* { */
@@ -290,8 +276,7 @@ int optimal_transfer(double *x,
                      double *kern_cross,
                      double *kernel_matrix,
                      double *fo1,
-                     double *fo2,
-                     double  h)
+                     double *fo2)
 {
   /* c1 is the current closest cluster, c2 is the current second closest, and cl
    * is the second closest for an observation upon entering this stage */
@@ -487,8 +472,7 @@ void quick_transfer(double *x,
                     double *kern_cross,
                     double *kernel_matrix,
                     double *fo1,
-                    double *fo2,
-                    double  h)
+                    double *fo2)
 {
   int c1, c2;
   int i, j;
@@ -642,4 +626,22 @@ int rand_multinom(int n, double *probs)
   }
   /* this should never happen */
   return -1;
+}
+
+void get_kernel_matrix(double *x,
+                       int     n,
+                       int     p,
+                       double  h,
+                       double  (*kernel)(int, int, double*, int, int, double),
+                       double *kernel_matrix)
+{
+  for (int i = 0; i < n; i++)
+  {
+    for (int j = 0; j <= i; j++)
+    {
+      kernel_matrix[get_index(i, j, n)] = kernel(i, j, x, n, p, h);
+      kernel_matrix[get_index(j, i, n)] = kernel_matrix[get_index(i, j, n)];
+    }
+  }
+  return;
 }
