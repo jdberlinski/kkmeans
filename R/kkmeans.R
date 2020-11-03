@@ -12,9 +12,11 @@
 #' gaussian kernel)
 #' @param nstart number of times to run the algorithm. the run with the lowest
 #' total within cluster SSE (in feature space) will be returned
+#' @param depth either 0 (no parameter estimation) or the maximum iteration
+#' depth for parameter estimation
 #' @param iter_max the maximum number of iterations to allow
 #' @export
-kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000L) {
+kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, depth = 0L, iter_max = 1000L) {
 
   valid_kerns = c("gaussian", "poly")
   valid_prefs = c("g", "p")
@@ -26,6 +28,8 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000
     k <- as.integer(k)
   if ( !is.integer(nstart) )
     nstart <- as.integer(nstart)
+  if ( !is.integer(depth) )
+    depth <- as.integer(depth)
   if ( !is.matrix(data) ) {
     warning("Converting data to matrix.")
     data <- as.matrix(data)
@@ -33,15 +37,24 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000
   if ( !is.integer(iter_max) )
     iter_max <- as.integer(iter.max)
 
-  lowest_wss <- Inf
-  lowest_res <- NULL
-  for (i in 1:nstart) {
-    retlist <- .Call('kkmeans', data, k, kern, param, iter_max)
-    if (sum(retlist[[3]]) < lowest_wss) {
-      lowest_wss <- sum(retlist[[3]])
-      lowest_res <- retlist
+  if (depth > 0 && kern != "g" && kern != "gaussian")
+    stop("If depth > 0, `kern` must be gaussian.")
+
+  if (depth > 0) {
+    lowest_res <- .Call('kkmeans_est', data, k, depth, param, iter_max)
+  }
+  else {
+    lowest_wss <- Inf
+    lowest_res <- NULL
+    for (i in 1:nstart) {
+      retlist <- .Call('kkmeans', data, k, kern, param, iter_max)
+      if (sum(retlist[[3]]) < lowest_wss) {
+        lowest_wss <- sum(retlist[[3]])
+        lowest_res <- retlist
+      }
     }
   }
+
   names(lowest_res) <- c("cluster", "centers", "wss")
 
   return(lowest_res)
