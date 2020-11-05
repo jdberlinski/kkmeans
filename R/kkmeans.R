@@ -42,6 +42,7 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, depth = 0L, ite
 
   if (depth > 0) {
     lowest_res <- .Call('kkmeans_est', data, k, depth, param, iter_max)
+    names(lowest_res) <- c("cluster", "centers", "wss", "param")
   }
   else {
     lowest_wss <- Inf
@@ -53,9 +54,9 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, depth = 0L, ite
         lowest_res <- retlist
       }
     }
+    names(lowest_res) <- c("cluster", "centers", "wss")
   }
 
-  names(lowest_res) <- c("cluster", "centers", "wss")
 
   return(lowest_res)
 }

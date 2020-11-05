@@ -9,8 +9,8 @@ void get_kernel_matrix(double *x, int n, int p, double h,
                        double  (*kernel)(int, int, double*, int, int, double),
                        double *kernel_matrix);
 double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq);
-void param_search(double *x, int n, int p, int k, int imax, double *kernel_matrix,
-                  double *mu, double *sse, int *ic1, int est_len, double h);
+double param_search(double *x, int n, int p, int k, int imax, double *kernel_matrix,
+                    double *mu, double *sse, int *ic1, int est_len, double h);
 
 //' An Efficient Kernel K-Means Algorithm
 //' @name kkmeans_est
@@ -30,6 +30,7 @@ SEXP kkmeans_est(SEXP data, SEXP centers, SEXP depth, SEXP init, SEXP iter_max)
   SEXP mu_out;
   SEXP sse_out;
   SEXP ret_list;
+  SEXP end_sigma;
 
   if (!isReal(data))
     error("Error: `data` must be a double vector.");
@@ -82,12 +83,13 @@ SEXP kkmeans_est(SEXP data, SEXP centers, SEXP depth, SEXP init, SEXP iter_max)
 
   int j;
   int sum = 0;
+  double final_sigma;
   while (!converged)
   {
 
     memcpy(ic1_copy, ic1, n * sizeof(int));
     get_kernel_matrix(x, n, p, h, kernel, kernel_matrix);
-    param_search(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, est_len, h);
+    final_sigma = param_search(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, est_len, h);
 
     sum = 0;
     for (j = 0; j < n; j++)
@@ -98,10 +100,13 @@ SEXP kkmeans_est(SEXP data, SEXP centers, SEXP depth, SEXP init, SEXP iter_max)
 
 
 
-  PROTECT(cluster_out = allocVector(INTSXP , n));
-  PROTECT(mu_out      = allocMatrix(REALSXP, k, p));
-  PROTECT(sse_out     = allocVector(REALSXP, k));
-  PROTECT(ret_list    = allocVector(VECSXP , 3));
+  PROTECT(cluster_out  = allocVector(INTSXP , n));
+  PROTECT(mu_out       = allocMatrix(REALSXP, k, p));
+  PROTECT(sse_out      = allocVector(REALSXP, k));
+  PROTECT(end_sigma    = allocVector(REALSXP , 1));
+  PROTECT(ret_list     = allocVector(VECSXP , 4));
+
+  REAL(end_sigma)[0] = final_sigma;
 
   double *pmu;
   double *psse;
@@ -123,15 +128,16 @@ SEXP kkmeans_est(SEXP data, SEXP centers, SEXP depth, SEXP init, SEXP iter_max)
   SET_VECTOR_ELT(ret_list, 0, cluster_out);
   SET_VECTOR_ELT(ret_list, 1, mu_out);
   SET_VECTOR_ELT(ret_list, 2, sse_out);
+  SET_VECTOR_ELT(ret_list, 3, end_sigma);
 
   // TODO: it's easier to set names in R, but it might be better to set them
   // here. Look into it.
-  UNPROTECT(4);
+  UNPROTECT(5);
 
   return ret_list;
 }
 
-void param_search(double *x,
+double param_search(double *x,
                   int     n,
                   int     p,
                   int     k,
@@ -202,6 +208,5 @@ void param_search(double *x,
       kernel_matrix[j] /= k_prime[j];
     }
 
-  h = sigma;
-  return;
+  return sigma;
 }
