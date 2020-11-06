@@ -170,29 +170,35 @@ double param_search(double *x,
     numerator *= 2;
     denominator *= 2;
 
-    sum = 0;
-
     for (j = 0; j < n*n; j++)
       k_prime[j] = sqrt(k_prime[j]);
 
+    sum = 0;
     for (j = 0; j < n; j++)
       sum += ic1[j] == p_prime[j];
 
     if (!change)
+    {
+      numerator--;
       for (j = 0; j < n*n; j++)
       {
-        numerator--;
         kernel_matrix[j] /= k_prime[j];
       }
+    }
     else
+    {
+      numerator++;
       for (j = 0; j < n*n; j++)
       {
-        numerator++;
         any_change = 1;
         kernel_matrix[j] *= k_prime[j];
       }
+    }
 
     kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1);
+    /* sum = 0; */
+    /* for (j = 0; j < n; j++) */
+    /*   sum += ic1[j] == p_prime[j]; */
     change = (sum == n) + (sum == 0);
     if (change)
       sigma = h * denominator / numerator;
@@ -202,11 +208,12 @@ double param_search(double *x,
     sigma = h * denominator / numerator;
 
   else if (!change)
+  {
     for (j = 0; j < n*n; j++)
     {
-      numerator--;
       kernel_matrix[j] /= k_prime[j];
     }
+  }
 
   return sigma;
 }
