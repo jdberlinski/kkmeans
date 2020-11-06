@@ -183,6 +183,9 @@ void kcluster(double *x,
       change[l] = 0;
   }
 
+  // TODO: Something here needs to be fixed. When testing the bullseye dataset with sigma = 40ish, 
+  // the wss returned is negative.
+  // I think kern_cross may need to be updated.
   for (l = 0; l < k; l++)
   {
     sse[l] = 0;
