@@ -85,7 +85,7 @@ SEXP kkmeans_est(SEXP data, SEXP centers, SEXP depth, SEXP init, SEXP iter_max)
 
   int j;
   int sum = 0;
-  double final_sigma;
+  double final_sigma = h;
   while (!converged)
   {
 
@@ -183,12 +183,14 @@ double param_search(double *x,
 
     if (!changes)
     {
+      Rprintf("No changes, reducing sigma\n");
       numerator++;
       for (j = 0; j < n*n; j++)
         if (kernel_matrix[j] > 0) kernel_matrix[j] *= k_prime[j];
     }
     else
     {
+      Rprintf("Found change, increasing sigma (current value: )\n");
       numerator--;
       for (j = 0; j < n*n; j++)
         kernel_matrix[j] /= k_prime[j];
@@ -202,6 +204,7 @@ double param_search(double *x,
     changes = (sum == n) + (sum == 0);
     if (changes)
       sigma = h * denominator / numerator;
+    memcpy(p_prime, ic1, n * sizeof(int));
 
     done = log2(denominator) >= est_len;
   }
