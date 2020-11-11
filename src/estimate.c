@@ -1,6 +1,8 @@
 #include <Rinternals.h>
 #include <R.h>
 #include <Rmath.h>
+#include <math.h>
+
 
 
 void kcluster(double *x, int n, int p, int k, int iter_max,
@@ -83,7 +85,7 @@ SEXP kkmeans_est(SEXP data, SEXP centers, SEXP depth, SEXP init, SEXP iter_max)
 
   int j;
   int sum = 0;
-  double final_sigma;
+  double final_sigma = h;
   while (!converged)
   {
 
@@ -98,6 +100,7 @@ SEXP kkmeans_est(SEXP data, SEXP centers, SEXP depth, SEXP init, SEXP iter_max)
     converged = (sum == n) + (sum == 0);
   }
 
+  kcluster(x, n, p, k, 1, kernel_matrix, mu, sse, ic1);
 
 
   PROTECT(cluster_out  = allocVector(INTSXP , n));
@@ -151,21 +154,26 @@ double param_search(double *x,
 {
   int i, j;
   int sum = 0;
+
+  double sigma = h;
   int numerator = 1;
   int denominator = 1;
-  int change = 0;
-  int any_change = 0;
-  double sigma = h;
 
   double *k_prime = (double *) S_alloc(n * n, sizeof(double));
   int    *p_prime = (int *) S_alloc(n, sizeof(int));
 
-  for (i = 0; i < n; i++)
-    p_prime[i] = ic1[i];
-  for (i = 0; i < n*n; i++)
-    k_prime[i] = kernel_matrix[i];
+  /* for (i = 0; i < n; i++) */
+  /*   p_prime[i] = ic1[i]; */
+  memcpy(p_prime, ic1, n * sizeof(int));
+  memcpy(k_prime, kernel_matrix, n*n * sizeof(double));
+  /* for (i = 0; i < n*n; i++) */
+  /*   k_prime[i] = kernel_matrix[i]; */
 
-  for (i = 0; i < est_len; i++)
+  int done = 0;
+  int changes = 0;
+  int any_changes = 0;
+
+  while (!done)
   {
     numerator *= 2;
     denominator *= 2;
@@ -173,47 +181,40 @@ double param_search(double *x,
     for (j = 0; j < n*n; j++)
       k_prime[j] = sqrt(k_prime[j]);
 
-    sum = 0;
-    for (j = 0; j < n; j++)
-      sum += ic1[j] == p_prime[j];
-
-    if (!change)
+    if (!changes)
     {
-      numerator--;
+      Rprintf("No changes, reducing sigma\n");
+      numerator++;
       for (j = 0; j < n*n; j++)
-      {
-        kernel_matrix[j] /= k_prime[j];
-      }
+        if (kernel_matrix[j] > 0) kernel_matrix[j] *= k_prime[j];
     }
     else
     {
-      numerator++;
+      Rprintf("Found change, increasing sigma (current value: )\n");
+      numerator--;
       for (j = 0; j < n*n; j++)
-      {
-        any_change = 1;
-        kernel_matrix[j] *= k_prime[j];
-      }
+        kernel_matrix[j] /= k_prime[j];
+      any_changes = 1;
     }
 
     kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1);
-    /* sum = 0; */
-    /* for (j = 0; j < n; j++) */
-    /*   sum += ic1[j] == p_prime[j]; */
-    change = (sum == n) + (sum == 0);
-    if (change)
+    sum = 0;
+    for (j = 0; j < n; j++)
+      sum += ic1[j] == p_prime[j];
+    changes = (sum == n) + (sum == 0);
+    if (changes)
       sigma = h * denominator / numerator;
+    memcpy(p_prime, ic1, n * sizeof(int));
+
+    done = log2(denominator) >= est_len;
   }
 
-  if (!any_change)
+  if (!any_changes)
     sigma = h * denominator / numerator;
-
-  else if (!change)
-  {
+  else if (!changes)
     for (j = 0; j < n*n; j++)
-    {
-      kernel_matrix[j] /= k_prime[j];
-    }
-  }
+      if (kernel_matrix[j] > 0) kernel_matrix[j] *= k_prime[j];
 
   return sigma;
+
 }
