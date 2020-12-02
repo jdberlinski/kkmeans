@@ -15,8 +15,11 @@
 #' @param depth either 0 (no parameter estimation) or the maximum iteration
 #' depth for parameter estimation
 #' @param iter_max the maximum number of iterations to allow
+#' @param estimate which form of estimation to do -- "otg" or "mknn"
+#' @param nn which neighbor to consider for mknn
 #' @export
-kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, depth = 0L, iter_max = 1000L) {
+kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, depth = 0L, iter_max = 1000L, estimate = F,
+                    nn = 0) {
 
   valid_kerns = c("gaussian", "poly")
   valid_prefs = c("g", "p")
@@ -35,10 +38,15 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, depth = 0L, ite
     data <- as.matrix(data)
   }
   if ( !is.integer(iter_max) )
-    iter_max <- as.integer(iter.max)
+    iter_max <- as.integer(iter_max)
 
   if (depth > 0 && kern != "g" && kern != "gaussian")
     stop("If depth > 0, `kern` must be gaussian.")
+
+  if (tolower(estimate) == "mknn") {
+    if (!nn) nn <- round(log2(nrow(data)) + 1)
+    param <- get_mknn_dist(data, nn)
+  }
 
   if (depth > 0) {
     lowest_res <- .Call('kkmeans_est', data, k, depth, param, iter_max)

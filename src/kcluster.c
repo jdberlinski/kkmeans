@@ -95,27 +95,33 @@ void kcluster(double *x,
    * transfer stage */
   int n_transfer = -1;
 
-  /* First, randomly assign each point to a cluster */
-  for (i = 0; i < n; i++)
+  if (iter_max == 1111)
   {
-    curr_clust = rand_dunif(k);
-    n_k[curr_clust]++;
+    init_centers(n, k, ic1, ic2, n_k, kernel_matrix);
+  }
+  else {
+    /* First, randomly assign each point to a cluster */
+    for (i = 0; i < n; i++)
+    {
+      curr_clust = rand_dunif(k);
+      n_k[curr_clust]++;
 
-    ic1[i] = curr_clust;
-    ic2[i] = (curr_clust + 1) % k;
+      ic1[i] = curr_clust;
+      ic2[i] = (curr_clust + 1) % k;
 
+    }
   }
 
   for (l = 0; l < k; l++)
   {
     kern_cross[l] = 0.;
-    n_k[l] = 0;
+    /* n_k[l] = 0; */
 
     for (i = 0; i < n; i++)
     {
       if (ic1[i] == l)
       {
-        n_k[l]++;
+        /* n_k[l]++; */
         for (j = 0; j < n; j++)
         {
           if (ic1[j] == l)
@@ -128,7 +134,9 @@ void kcluster(double *x,
   for (l = 0; l < k; l++)
   {
     if (!n_k[l])
+    {
       error("Error: Cluster %d has 0 observations. Exiting...\n Possible bad starting seed.\n", l);
+    }
 
     if (n_k[l] == 1)
       n_minus[l] = big;
@@ -154,11 +162,6 @@ void kcluster(double *x,
     n_transfer = optimal_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k,
         ic1, ic2, change, itran, loss, live, kern_cross, kernel_matrix, fo1, fo2);
 
-    /* for(l = 0; l < k; l++) */
-    /* { */
-    /*   Rprintf("n_k[%d] = %d\n", l, n_k[l]); */
-    /* } */
-
     /* if no transfer took place in the optimal transfer stage, then stop */
     /* (because none of the points will be in the live set) */
     if (!n_transfer)
@@ -166,11 +169,6 @@ void kcluster(double *x,
 
     quick_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1, ic2, change,
         itran, loss, live, kern_cross, kernel_matrix, fo1, fo2);
-
-    /* for(l = 0; l < k; l++) */
-    /* { */
-    /*   Rprintf("n_k[%d] = %d\n", l, n_k[l]); */
-    /* } */
 
     /* if there are only two clusters, there is no need to re-enter the optimal
      * transfer stage */
@@ -643,5 +641,77 @@ void get_kernel_matrix(double *x,
       kernel_matrix[get_index(j, i, n)] = kernel_matrix[get_index(i, j, n)];
     }
   }
+  return;
+}
+void init_centers(int n, int k, int *ic1, int *ic2, int *n_k, double *kernel_matrix)
+{
+  int i, j;
+  double self_kern = kernel_matrix[get_index(i, i, n)];
+  int first_center = rand_dunif(n);
+  int new_center, old_clust;
+  double *closest_dist = (double *) S_alloc(n, sizeof(double));
+  double *new_dist = (double *) S_alloc(n, sizeof(double));
+
+  double aux;
+
+  double total_prob;
+  double *prob_vec = (double *) S_alloc(n, sizeof(double));
+  double *cum_sum = (double *) S_alloc(n, sizeof(double));
+
+  for (i = 0; i < n; i++)
+    ic1[i] = 0;
+
+  /* now compute the distance from each point to the cluster with the single
+   * point */
+  for (i = 0; i < n; i++)
+    closest_dist[i] = 2*self_kern - 2*kernel_matrix[get_index(i, first_center, n)];
+
+  total_prob = 0;
+  for (i = 0; i < n; i++)
+  {
+    total_prob += closest_dist[i];
+    cum_sum[i] = total_prob;
+  }
+
+  for (i = 0; i < n; i++)
+    prob_vec[i] = closest_dist[i] / total_prob;
+
+  for (j = 1; j < k; j++)
+  {
+    GetRNGstate();
+    aux = unif_rand();
+    PutRNGstate();
+
+    for (i = 0; i < n; i++) {
+      if (cum_sum[i] - aux >= 0) break;
+    }
+    /* i is now the chosen point for the new cluster */
+    new_center = i;
+    ic1[new_center] = j;
+
+    for (i = 0; i < n; i++)
+    {
+      new_dist[i] = 2*self_kern - 2*kernel_matrix[get_index(i, new_center, n)];
+      if (new_dist[i] < closest_dist[i])
+      {
+        closest_dist[i] = new_dist[i];
+        old_clust = ic1[i];
+        ic1[i] = j;
+        ic2[i] = old_clust;
+      }
+    }
+    total_prob = 0;
+    for (i = 0; i < n; i++)
+    {
+      total_prob += closest_dist[i];
+      cum_sum[i] = total_prob;
+    }
+  }
+
+  for (j = 0; j < k; j++)
+    for (i = 0; i < n; i++)
+      if (ic1[i] == j)
+        n_k[j]++;
+
   return;
 }
