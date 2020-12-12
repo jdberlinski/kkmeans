@@ -24,7 +24,7 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000
 
   valid_kerns = c("gaussian", "poly")
   valid_prefs = c("g", "p")
-  valid_methods = c("otqt", "macqueen")
+  valid_methods = c("otqt", "macqueen", "lloyd")
 
   # some light error checking
   if ( !(kern %in% valid_kerns) & !(kern %in% valid_prefs) )

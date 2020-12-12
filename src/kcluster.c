@@ -200,6 +200,45 @@ void kcluster(double *x,
 
       if (!n_transfer) break;
     }
+    else if (heuristic == 3)
+    {
+      n_transfer = lloyd_step(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1,
+          loss, kern_cross, kernel_matrix, fo1);
+
+      /* now need to update the cluster-specific values */
+      for (l = 0; l < k; l++)
+      {
+        kern_cross[l] = 0.;
+        n_k[l] = 0;
+
+        for (i = 0; i < n; i++)
+        {
+          if (ic1[i] == l)
+          {
+            n_k[l]++;
+            for (j = 0; j < n; j++)
+            {
+              if (ic1[j] == l)
+                kern_cross[l] += kernel_matrix[get_index(i, j, n)];
+            }
+          }
+        }
+
+        if (n_k[l] <= 1)
+          n_minus[l] = big;
+        else
+        {
+          n_minus[l] = (double) n_k[l];
+          n_minus[l] /= (n_k[l] - 1);
+        }
+
+        n_plus[l] = (double) n_k[l];
+        n_plus[l] /= (n_k[l] + 1);
+      }
+
+
+      if (!n_transfer) break;
+    }
     else
     {
       error("Incorrect heuristic");
@@ -775,6 +814,87 @@ int macqueen_step(double *x,
     }
   }
 
+  return n_transfer;
+}
+int lloyd_step(double *x,
+               double *mu,
+               double *sse,
+               double *n_minus,
+               double *n_plus,
+               int    *n_k,
+               int     n,
+               int     p,
+               int     k,
+               int    *ic1,
+               double *loss,
+               double *kern_cross,
+               double *kernel_matrix,
+               double *fo1)
+{
+
+  /* c1 is the current closest center, c2 is the candidate cluster */
+  int c1, c2;
+  int i, j, l;
+  int n_transfer = 0;
+  double acc;
+  int *new_clusters = (int *) S_alloc(n, sizeof(int));
+  memcpy(new_clusters, ic1, n*sizeof(int));
+
+  double self_kern;
+
+  double M, temp, fo_acc, fo_low;
+  double big = 1.0E+10;
+
+
+  for (i = 0; i < n; i++)
+  {
+    self_kern = kernel_matrix[get_index(i, i, n)];
+
+    c1 = ic1[i];
+
+    /* skip if the observation is the only member of its cluster */
+    if (n_k[c1] == 1) continue;
+
+    acc = self_kern + 1. / (n_k[c1] * n_k[c1]) * kern_cross[c1];
+    fo_acc = 0;
+
+    for (j = 0; j < n; j++)
+      if (ic1[j] == c1) fo_acc += kernel_matrix[get_index(i, j, n)];
+
+    fo1[i] = fo_acc;
+    acc -= 2. / (n_k[c1]) * fo_acc;
+
+    loss[i] = acc * n_minus[c1];
+
+    M = big;
+    c2 = -1;
+
+    for (l = 0; l < k; l++)
+    {
+      if (l == c1) continue;
+      acc = self_kern + 1. / (n_k[l] * n_k[l]) * kern_cross[l];
+
+      fo_acc = 0;
+      for (j = 0; j < n; j++)
+        if (ic1[j] == l) fo_acc += kernel_matrix[get_index(i, j, n)];
+
+      acc -= 2. / (n_k[l]) * fo_acc;
+
+      if (acc < M)
+      {
+        M = acc;
+        c2 = l;
+        fo_low = fo_acc;
+      }
+    }
+    if (M < loss[i] / n_minus[c1])
+    {
+      n_transfer++;
+      new_clusters[i] = c2;
+    }
+  }
+
+  memcpy(ic1, new_clusters, n*sizeof(int));
   return n_transfer;
 }
 
