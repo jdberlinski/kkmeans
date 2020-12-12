@@ -36,6 +36,20 @@ void quick_transfer(double *x,
                     double *kernel_matrix,
                     double *fo1,
                     double *fo2);
+int macqueen_step(double *x,
+                  double *mu,
+                  double *sse,
+                  double *n_minus,
+                  double *n_plus,
+                  int    *n_k,
+                  int     n,
+                  int     p,
+                  int     k,
+                  int    *ic1,
+                  double *loss,
+                  double *kern_cross,
+                  double *kernel_matrix,
+                  double *fo1);
 
 int get_index(int i, int j, int n);
 
