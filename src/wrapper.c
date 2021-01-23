@@ -2,7 +2,7 @@
 #include <R.h>
 
 void kcluster(double *x, int n, int p, int k, int iter_max,
-    double *kernel_matrix, double *mu, double *sse, int *ic1);
+    double *kernel_matrix, double *mu, double *sse, int *ic1, int heuristic);
 void get_kernel_matrix(double *x, int n, int p, double h,
                        double  (*kernel)(int, int, double*, int, int, double),
                        double *kernel_matrix);
@@ -21,7 +21,8 @@ double kernel_poly(int i, int j, double *x, int n, int p, double h);
 //' letter
 //' @param params parameters to pass to kernel function.
 //' @export
-SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max)
+SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max, SEXP init_centers,
+             SEXP method)
 {
   SEXP dims = getAttrib(data, R_DimSymbol);
   SEXP cluster_out;
@@ -48,15 +49,18 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max)
 
   /* get the variables from R */
   int     j;
-  int     n        = INTEGER(dims)[0];
-  int     p        = INTEGER(dims)[1];
-  int    *imax_ptr = INTEGER(iter_max);
-  int    *k_ptr    = INTEGER(centers);
-  double *h_ptr    = REAL(param);
+  int     n         = INTEGER(dims)[0];
+  int     p         = INTEGER(dims)[1];
+  int    *imax_ptr  = INTEGER(iter_max);
+  int    *k_ptr     = INTEGER(centers);
+  /* 1 == OT-QT, 2 == MacQueen */
+  int    *heur_ptr  = INTEGER(method);
+  double *h_ptr     = REAL(param);
 
-  int    imax = *imax_ptr;
-  int    k    = *k_ptr;
-  double h    = *h_ptr;
+  int    imax      = *imax_ptr;
+  int    k         = *k_ptr;
+  int    heuristic = *heur_ptr;
+  double h         = *h_ptr;
 
   double (*kernel)(int, int, double[], int, int, double);
   kernel = NULL;
@@ -79,8 +83,12 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max)
   /* set the variables in C */
   x = REAL(data);
 
+  ic1 = INTEGER(init_centers);
+
+  /*  */
+
   get_kernel_matrix(x, n, p, h, kernel, kernel_matrix);
-  kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1);
+  kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, heuristic);
 
   /* Create some return values for R */
   PROTECT(cluster_out = allocVector(INTSXP , n));

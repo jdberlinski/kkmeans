@@ -7,7 +7,7 @@ similar to [Hartigan and Wong (1979)][1]
 ## Installation
 In the extracted directory:
 ```{R}
-devtools::install()
+devtools::install_github("jdberlinski/kkmeans")
 ```
 
 ## Usage

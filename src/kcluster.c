@@ -27,6 +27,7 @@
  * @param *mu       - k*p array of cluster centers
  * @param *sse      - k array of SSE for each cluster
  * @param *ic1      - n array of closest cluster indicator
+ * @param  heuristic - integer indication of which algorithm to run
  */
 void kcluster(double *x,
               int     n,
@@ -36,7 +37,8 @@ void kcluster(double *x,
               double *kernel_matrix,
               double *mu,
               double *sse,
-              int    *ic1)
+              int    *ic1,
+              int     heuristic)
 {
   /* n_minus is n_k / (n_k - 1),  n_plus is n_k / (n_k + 1)*/
   double *n_minus = (double *) S_alloc(k, sizeof(double));
@@ -95,27 +97,33 @@ void kcluster(double *x,
    * transfer stage */
   int n_transfer = -1;
 
-  /* First, randomly assign each point to a cluster */
-  for (i = 0; i < n; i++)
+  if (iter_max == 1111)
   {
-    curr_clust = rand_dunif(k);
-    n_k[curr_clust]++;
+    init_centers(n, k, ic1, ic2, n_k, kernel_matrix);
+  }
+  else {
+    /* First, randomly assign each point to a cluster */
+    for (i = 0; i < n; i++)
+    {
+      /* curr_clust = rand_dunif(k); */
+      n_k[ic1[i]]++;
 
-    ic1[i] = curr_clust;
-    ic2[i] = (curr_clust + 1) % k;
+      /* ic1[i] = curr_clust; */ //don't need this anymore because of the randomizatiion from R
+      ic2[i] = (ic1[i] + 1) % k;
 
+    }
   }
 
   for (l = 0; l < k; l++)
   {
     kern_cross[l] = 0.;
-    n_k[l] = 0;
+    /* n_k[l] = 0; */
 
     for (i = 0; i < n; i++)
     {
       if (ic1[i] == l)
       {
-        n_k[l]++;
+        /* n_k[l]++; */
         for (j = 0; j < n; j++)
         {
           if (ic1[j] == l)
@@ -128,7 +136,9 @@ void kcluster(double *x,
   for (l = 0; l < k; l++)
   {
     if (!n_k[l])
+    {
       error("Error: Cluster %d has 0 observations. Exiting...\n Possible bad starting seed.\n", l);
+    }
 
     if (n_k[l] == 1)
       n_minus[l] = big;
@@ -145,42 +155,94 @@ void kcluster(double *x,
     change[l] = -1;
   }
 
+  int nqtran, notran;
+  nqtran = 0;
+  notran = 0;
   for (int iter = 0; iter < iter_max; iter++)
   {
-    /* The optimal transfer stage passes through the data once, reallocating
-     * each point to the cluster that will yield the greatest reduction of
-     * within-cluster sum of squares */
 
-    n_transfer = optimal_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k,
-        ic1, ic2, change, itran, loss, live, kern_cross, kernel_matrix, fo1, fo2);
+    if (heuristic == 1)
+    {
+      /* The optimal transfer stage passes through the data once, reallocating
+       * each point to the cluster that will yield the greatest reduction of
+       * within-cluster sum of squares */
 
-    /* for(l = 0; l < k; l++) */
-    /* { */
-    /*   Rprintf("n_k[%d] = %d\n", l, n_k[l]); */
-    /* } */
+      n_transfer = optimal_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k,
+          ic1, ic2, change, itran, loss, live, kern_cross, kernel_matrix, fo1, fo2);
+      notran++;
 
-    /* if no transfer took place in the optimal transfer stage, then stop */
-    /* (because none of the points will be in the live set) */
-    if (!n_transfer)
-      break;
+      /* if no transfer took place in the optimal transfer stage, then stop */
+      /* (because none of the points will be in the live set) */
+      if (!n_transfer)
+        break;
 
-    quick_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1, ic2, change,
-        itran, loss, live, kern_cross, kernel_matrix, fo1, fo2);
+      quick_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1, ic2, change,
+          itran, loss, live, kern_cross, kernel_matrix, fo1, fo2);
+      nqtran++;
 
-    /* for(l = 0; l < k; l++) */
-    /* { */
-    /*   Rprintf("n_k[%d] = %d\n", l, n_k[l]); */
-    /* } */
+      /* if there are only two clusters, there is no need to re-enter the optimal
+       * transfer stage */
+      /* if (k == 2) */
+      /*   break; */
 
-    /* if there are only two clusters, there is no need to re-enter the optimal
-     * transfer stage */
-    if (k == 2)
-      break;
+      /* change needs to be set back to zero before re-entering the optimal
+       * transfer stage */
+      for (l = 0; l < k; l++)
+        change[l] = 0;
 
-    /* change needs to be set back to zero before re-entering the optimal
-     * transfer stage */
-    for (l = 0; l < k; l++)
-      change[l] = 0;
+    /* Rprintf("Number of optimal transfer iterations: %d \n", notran); */
+    /* Rprintf("Number of quick transfer iterations: %d \n", nqtran); */
+    }
+    else if (heuristic == 2)
+    {
+      n_transfer = macqueen_step(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1,
+          loss, kern_cross, kernel_matrix, fo1);
+
+      if (!n_transfer) break;
+    }
+    else if (heuristic == 3)
+    {
+      n_transfer = lloyd_step(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1,
+          loss, kern_cross, kernel_matrix, fo1);
+
+      /* now need to update the cluster-specific values */
+      for (l = 0; l < k; l++)
+      {
+        kern_cross[l] = 0.;
+        n_k[l] = 0;
+
+        for (i = 0; i < n; i++)
+        {
+          if (ic1[i] == l)
+          {
+            n_k[l]++;
+            for (j = 0; j < n; j++)
+            {
+              if (ic1[j] == l)
+                kern_cross[l] += kernel_matrix[get_index(i, j, n)];
+            }
+          }
+        }
+
+        if (n_k[l] <= 1)
+          n_minus[l] = big;
+        else
+        {
+          n_minus[l] = (double) n_k[l];
+          n_minus[l] /= (n_k[l] - 1);
+        }
+
+        n_plus[l] = (double) n_k[l];
+        n_plus[l] /= (n_k[l] + 1);
+      }
+
+
+      if (!n_transfer) break;
+    }
+    else
+    {
+      error("Incorrect heuristic");
+    }
   }
 
   // TODO: Something here needs to be fixed. When testing the bullseye dataset with sigma = 40ish, 
@@ -646,5 +708,268 @@ void get_kernel_matrix(double *x,
       kernel_matrix[get_index(j, i, n)] = kernel_matrix[get_index(i, j, n)];
     }
   }
+  return;
+}
+
+int macqueen_step(double *x,
+                  double *mu,
+                  double *sse,
+                  double *n_minus,
+                  double *n_plus,
+                  int    *n_k,
+                  int     n,
+                  int     p,
+                  int     k,
+                  int    *ic1,
+                  double *loss,
+                  double *kern_cross,
+                  double *kernel_matrix,
+                  double *fo1)
+{
+
+  /* c1 is the current closest center, c2 is the candidate cluster */
+  int c1, c2;
+  int i, j, l;
+  int n_transfer = 0;
+  double acc;
+
+  double self_kern;
+
+  double M, temp, fo_acc, fo_low;
+  double big = 1.0E+10;
+
+
+  for (i = 0; i < n; i++)
+  {
+    self_kern = kernel_matrix[get_index(i, i, n)];
+
+    c1 = ic1[i];
+
+    /* skip if the observation is the only member of its cluster */
+    if (n_k[c1] == 1) continue;
+
+    acc = self_kern + 1. / (n_k[c1] * n_k[c1]) * kern_cross[c1];
+    fo_acc = 0;
+
+    for (j = 0; j < n; j++)
+      if (ic1[j] == c1) fo_acc += kernel_matrix[get_index(i, j, n)];
+
+    fo1[i] = fo_acc;
+    acc -= 2. / (n_k[c1]) * fo_acc;
+
+    loss[i] = acc * n_minus[c1];
+
+    M = big;
+    c2 = -1;
+
+    for (l = 0; l < k; l++)
+    {
+      if (l == c1) continue;
+      acc = self_kern + 1. / (n_k[l] * n_k[l]) * kern_cross[l];
+
+      fo_acc = 0;
+      for (j = 0; j < n; j++)
+        if (ic1[j] == l) fo_acc += kernel_matrix[get_index(i, j, n)];
+
+      acc -= 2. / (n_k[l]) * fo_acc;
+
+      if (acc < M)
+      {
+        M = acc;
+        c2 = l;
+        fo_low = fo_acc;
+      }
+    }
+    if (M < loss[i] / n_minus[c1])
+    {
+      n_transfer++;
+
+      kern_cross[c1] -= 2*fo1[i] + self_kern;
+      kern_cross[c2] += 2*fo_low + 2*self_kern;
+
+      n_k[c1]--;
+      n_k[c2]++;
+
+      if (n_k[c1] <= 1)
+        n_minus[c1] = big;
+      else
+      {
+        n_minus[c1] = (double) n_k[c1];
+        n_minus[c1] /= (n_k[c1] - 1);
+      }
+
+      n_plus[c1] = (double) n_k[c1];
+      n_plus[c1] /= (n_k[c1] + 1);
+
+      if (n_k[c2] <= 1)
+        n_minus[c2] = big;
+      else
+      {
+        n_minus[c2] = (double) n_k[c2];
+        n_minus[c2] /= (n_k[c2] - 1);
+      }
+
+      n_plus[c2] = (double) n_k[c2];
+      n_plus[c2] /= (n_k[c2] + 1);
+
+      ic1[i] = c2;
+      fo1[i] = fo_low + self_kern;
+    }
+  }
+
+  return n_transfer;
+}
+int lloyd_step(double *x,
+               double *mu,
+               double *sse,
+               double *n_minus,
+               double *n_plus,
+               int    *n_k,
+               int     n,
+               int     p,
+               int     k,
+               int    *ic1,
+               double *loss,
+               double *kern_cross,
+               double *kernel_matrix,
+               double *fo1)
+{
+
+  /* c1 is the current closest center, c2 is the candidate cluster */
+  int c1, c2;
+  int i, j, l;
+  int n_transfer = 0;
+  double acc;
+  int *new_clusters = (int *) S_alloc(n, sizeof(int));
+  memcpy(new_clusters, ic1, n*sizeof(int));
+
+  double self_kern;
+
+  double M, temp, fo_acc, fo_low;
+  double big = 1.0E+10;
+
+
+  for (i = 0; i < n; i++)
+  {
+    self_kern = kernel_matrix[get_index(i, i, n)];
+
+    c1 = ic1[i];
+
+    /* skip if the observation is the only member of its cluster */
+    if (n_k[c1] == 1) continue;
+
+    acc = self_kern + 1. / (n_k[c1] * n_k[c1]) * kern_cross[c1];
+    fo_acc = 0;
+
+    for (j = 0; j < n; j++)
+      if (ic1[j] == c1) fo_acc += kernel_matrix[get_index(i, j, n)];
+
+    fo1[i] = fo_acc;
+    acc -= 2. / (n_k[c1]) * fo_acc;
+
+    loss[i] = acc * n_minus[c1];
+
+    M = big;
+    c2 = -1;
+
+    for (l = 0; l < k; l++)
+    {
+      if (l == c1) continue;
+      acc = self_kern + 1. / (n_k[l] * n_k[l]) * kern_cross[l];
+
+      fo_acc = 0;
+      for (j = 0; j < n; j++)
+        if (ic1[j] == l) fo_acc += kernel_matrix[get_index(i, j, n)];
+
+      acc -= 2. / (n_k[l]) * fo_acc;
+
+      if (acc < M)
+      {
+        M = acc;
+        c2 = l;
+        fo_low = fo_acc;
+      }
+    }
+    if (M < loss[i] / n_minus[c1])
+    {
+      n_transfer++;
+      new_clusters[i] = c2;
+    }
+  }
+
+  memcpy(ic1, new_clusters, n*sizeof(int));
+  return n_transfer;
+}
+
+void init_centers(int n, int k, int *ic1, int *ic2, int *n_k, double *kernel_matrix)
+{
+  int i, j;
+  double self_kern = kernel_matrix[get_index(i, i, n)];
+  int first_center = rand_dunif(n);
+  int new_center, old_clust;
+  double *closest_dist = (double *) S_alloc(n, sizeof(double));
+  double *new_dist = (double *) S_alloc(n, sizeof(double));
+
+  double aux;
+
+  double total_prob;
+  double *prob_vec = (double *) S_alloc(n, sizeof(double));
+  double *cum_sum = (double *) S_alloc(n, sizeof(double));
+
+  for (i = 0; i < n; i++)
+    ic1[i] = 0;
+
+  /* now compute the distance from each point to the cluster with the single
+   * point */
+  for (i = 0; i < n; i++)
+    closest_dist[i] = 2*self_kern - 2*kernel_matrix[get_index(i, first_center, n)];
+
+  total_prob = 0;
+  for (i = 0; i < n; i++)
+  {
+    total_prob += closest_dist[i];
+    cum_sum[i] = total_prob;
+  }
+
+  for (i = 0; i < n; i++)
+    prob_vec[i] = closest_dist[i] / total_prob;
+
+  for (j = 1; j < k; j++)
+  {
+    GetRNGstate();
+    aux = unif_rand();
+    PutRNGstate();
+
+    for (i = 0; i < n; i++) {
+      if (cum_sum[i] - aux >= 0) break;
+    }
+    /* i is now the chosen point for the new cluster */
+    new_center = i;
+    ic1[new_center] = j;
+
+    for (i = 0; i < n; i++)
+    {
+      new_dist[i] = 2*self_kern - 2*kernel_matrix[get_index(i, new_center, n)];
+      if (new_dist[i] < closest_dist[i])
+      {
+        closest_dist[i] = new_dist[i];
+        old_clust = ic1[i];
+        ic1[i] = j;
+        ic2[i] = old_clust;
+      }
+    }
+    total_prob = 0;
+    for (i = 0; i < n; i++)
+    {
+      total_prob += closest_dist[i];
+      cum_sum[i] = total_prob;
+    }
+  }
+
+  for (j = 0; j < k; j++)
+    for (i = 0; i < n; i++)
+      if (ic1[i] == j)
+        n_k[j]++;
+
   return;
 }

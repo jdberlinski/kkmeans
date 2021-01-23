@@ -4,7 +4,15 @@
 \alias{kkmeans}
 \title{An Efficient Kernel K-Means Algorithm}
 \usage{
-kkmeans(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000L)
+kkmeans(
+  data,
+  k,
+  kern = "g",
+  param = 1,
+  nstart = 10,
+  depth = 0L,
+  iter_max = 1000L
+)
 }
 \arguments{
 \item{data}{data to cluster}
@@ -19,6 +27,9 @@ gaussian kernel)}
 
 \item{nstart}{number of times to run the algorithm. the run with the lowest
 total within cluster SSE (in feature space) will be returned}
+
+\item{depth}{either 0 (no parameter estimation) or the maximum iteration
+depth for parameter estimation}
 
 \item{iter_max}{the maximum number of iterations to allow}
 }

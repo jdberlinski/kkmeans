@@ -90,8 +90,8 @@ SEXP kkmeans_est(SEXP data, SEXP centers, SEXP depth, SEXP init, SEXP iter_max)
   {
 
     memcpy(ic1_copy, ic1, n * sizeof(int));
-    get_kernel_matrix(x, n, p, h, kernel, kernel_matrix);
-    final_sigma = param_search(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, est_len, h);
+    get_kernel_matrix(x, n, p, final_sigma, kernel, kernel_matrix);
+    final_sigma = param_search(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, est_len, final_sigma);
 
     sum = 0;
     for (j = 0; j < n; j++)
@@ -162,6 +162,7 @@ double param_search(double *x,
   double *k_prime = (double *) S_alloc(n * n, sizeof(double));
   int    *p_prime = (int *) S_alloc(n, sizeof(int));
 
+  kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1);
   /* for (i = 0; i < n; i++) */
   /*   p_prime[i] = ic1[i]; */
   memcpy(p_prime, ic1, n * sizeof(int));
@@ -183,14 +184,14 @@ double param_search(double *x,
 
     if (!changes)
     {
-      Rprintf("No changes, reducing sigma\n");
+      /* Rprintf("No changes, reducing sigma\n"); */
       numerator++;
       for (j = 0; j < n*n; j++)
         if (kernel_matrix[j] > 0) kernel_matrix[j] *= k_prime[j];
     }
     else
     {
-      Rprintf("Found change, increasing sigma (current value: )\n");
+      /* Rprintf("Found change, increasing sigma (current value: )\n"); */
       numerator--;
       for (j = 0; j < n*n; j++)
         kernel_matrix[j] /= k_prime[j];
