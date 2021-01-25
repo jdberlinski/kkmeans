@@ -90,9 +90,6 @@ void kcluster(double *x,
    * to clusters */
   int i, j, l;
 
-  /* current cluster stores the cluster we are currently considering */
-  int curr_clust = 0;
-
   /* n_transfer is the number of transfers that took place in the optimal
    * transfer stage */
   int n_transfer = -1;
@@ -105,25 +102,18 @@ void kcluster(double *x,
     /* First, randomly assign each point to a cluster */
     for (i = 0; i < n; i++)
     {
-      /* curr_clust = rand_dunif(k); */
       n_k[ic1[i]]++;
-
-      /* ic1[i] = curr_clust; */ //don't need this anymore because of the randomizatiion from R
       ic2[i] = (ic1[i] + 1) % k;
-
     }
   }
 
   for (l = 0; l < k; l++)
   {
     kern_cross[l] = 0.;
-    /* n_k[l] = 0; */
-
     for (i = 0; i < n; i++)
     {
       if (ic1[i] == l)
       {
-        /* n_k[l]++; */
         for (j = 0; j < n; j++)
         {
           if (ic1[j] == l)
@@ -136,9 +126,7 @@ void kcluster(double *x,
   for (l = 0; l < k; l++)
   {
     if (!n_k[l])
-    {
       error("Error: Cluster %d has 0 observations. Exiting...\n Possible bad starting seed.\n", l);
-    }
 
     if (n_k[l] == 1)
       n_minus[l] = big;
@@ -187,8 +175,9 @@ void kcluster(double *x,
 
       /* change needs to be set back to zero before re-entering the optimal
        * transfer stage */
-      for (l = 0; l < k; l++)
-        change[l] = 0;
+      memset(&change[0], 0, k * sizeof(int));
+      /* for (l = 0; l < k; l++) */
+      /*   change[l] = 0; */
 
     /* Rprintf("Number of optimal transfer iterations: %d \n", notran); */
     /* Rprintf("Number of quick transfer iterations: %d \n", nqtran); */
@@ -245,7 +234,7 @@ void kcluster(double *x,
     }
   }
 
-  // TODO: Something here needs to be fixed. When testing the bullseye dataset with sigma = 40ish, 
+  // TODO: Something here needs to be fixed. When testing the bullseye dataset with sigma = 40ish,
   // the wss returned is negative.
   // I think kern_cross may need to be updated.
   for (l = 0; l < k; l++)
@@ -345,7 +334,7 @@ int optimal_transfer(double *x,
 {
   /* c1 is the current closest cluster, c2 is the current second closest, and cl
    * is the second closest for an observation upon entering this stage */
-  int c1, c2, cl;
+  int c1, c2;
 
   int i, j, l;
 
@@ -369,14 +358,13 @@ int optimal_transfer(double *x,
 
     c1 = ic1[i];
     c2 = ic2[i];
-    cl = c2;
 
     /* skip this observation if it is the only member of its cluster */
     if (n_k[c1] == 1) continue;
 
     /* if cluster c1 has been updated in this stage, we need to recompute the
      * loss for this observation */
-    if (1)//change[c1])
+    if (change[c1])
     {
       acc = self_kern + 1. / (n_k[c1] * n_k[c1]) * kern_cross[c1];
       fo_acc = 0;
@@ -391,7 +379,7 @@ int optimal_transfer(double *x,
     }
 
     /* this is the same thing as above, except with c2 */
-    if (1) //change[c2])
+    if (change[c2])
     {
       fo_acc = 0;
 
@@ -574,7 +562,7 @@ void quick_transfer(double *x,
 
       if (n_k[c1] == 1) continue;
 
-      if (1)//nstep <= change[c1])
+      if (nstep <= change[c1])
       {
         acc = self_kern + 1. / (n_k[c1] * n_k[c1]) * kern_cross[c1];
         fo_acc = 0;
@@ -588,7 +576,7 @@ void quick_transfer(double *x,
         loss[i] = acc * n_minus[c1];
       }
 
-      if (1)// nstep <= change[c2])
+      if (nstep <= change[c2])
       {
         fo_acc = 0;
 
