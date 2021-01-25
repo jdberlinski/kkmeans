@@ -10,30 +10,62 @@ kkmeans(
   kern = "g",
   param = 1,
   nstart = 10,
-  depth = 0L,
-  iter_max = 1000L
+  iter_max = 1000L,
+  estimate = F,
+  nn = 0,
+  init_centers = sample(1:k, size = nrow(data), replace = TRUE),
+  method = c("otqt", "macqueen", "lloyd")
 )
 }
 \arguments{
-\item{data}{data to cluster}
+\item{data}{Numeric data to cluster. This will be converted to a matrix using \code{as.matrix}.}
 
-\item{k}{the number of clusters. if jump == TRUE, then this is ignored}
+\item{k}{Number of clusters.}
 
-\item{kern}{the kernel to use, one of ('gaussian', 'poly'), can use first
-letter}
+\item{kern}{Kernel to use, one of ('gaussian', 'poly').}
 
 \item{param}{value of parameter to pass to kernel function.(eg sigma in
-gaussian kernel)}
+gaussian kernel). The Gaussian kernel is K(x, y) = exp(- ||x - y||^2 / (2*\code{param}))),
+and the polynomial kernel is K(x, y) = (x'y + 1) ^ \code{param}}
 
-\item{nstart}{number of times to run the algorithm. the run with the lowest
+\item{nstart}{Number of times to run the algorithm. The run with the lowest
 total within cluster SSE (in feature space) will be returned}
 
-\item{depth}{either 0 (no parameter estimation) or the maximum iteration
-depth for parameter estimation}
+\item{iter_max}{The maximum number of iterations to allow.}
 
-\item{iter_max}{the maximum number of iterations to allow}
+\item{estimate}{If using the Gaussian kernel, specifying \code{estimate = "mknn"} will use
+an \code{nn}-nearest neighbor method for estimating \code{param}.}
+
+\item{nn}{How many neighbors to consider for mknn estimation.}
+
+\item{init_centers}{The initial values for cluster membership. If \code{nstart} is greater
+than 1, any start beyond the first iteration will use randomized centers.}
+
+\item{method}{Which method to use for kernel k-means iteration. One of ("otqt", "macqueen", "lloyd").
+"otqt" is a method using optimal-transfer and quick-transfer heuristics similar to the Hartigan and
+Wong algorithm for k-means clustering.}
+}
+\value{
+A list containing the following useful information
+\describe{
+\item{cluster}{The final cluster membership.}
+\item{centers}{A k x p matrix, the rows of which contain the centers of the clusters in R^n (not to be confused
+with the clusters in feature space)}
+\item{wss}{The within-cluster sum of squares for each cluster in feature space.}
+\item{param}{The parameter value used.}
+}
 }
 \description{
 Performs kernel k-means with the specified kernel using an
-algorithm similar to Hartigan and Wong's k-means algorithm.
+optimal-transfer quick-transfer algorithm.
+}
+\examples{
+data <- as.matrix(iris[, 1:4])
+
+# cluster using linear kernel (normal k-means)
+result <- kkmeans(data, k = 3, kern = "poly", param = 1)
+
+# cluster using gaussian kernel
+# estimating the parameter with 3-nearest neighbors
+result <- kkmeans(data, k = 3, kern = "g", estimate = "mknn", nn = 3)
 }

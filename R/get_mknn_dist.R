@@ -1,7 +1,7 @@
 #' Get the average distance to each points k-nearest neighbor
 #' @name get_mknn_dist
 #'
-#' @description given a dataset and a value k, will return the value of the
+#' @description Given a dataset and a value k, will return the value of the
 #' average distance from each point to it's k-nearest neighbor
 #'
 #' @param data the data vector
