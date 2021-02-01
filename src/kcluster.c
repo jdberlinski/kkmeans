@@ -228,6 +228,30 @@ void kcluster(double *x,
 
       if (!n_transfer) break;
     }
+    else if (heuristic == 4)
+    {
+      /* The optimal transfer stage passes through the data once, reallocating
+       * each point to the cluster that will yield the greatest reduction of
+       * within-cluster sum of squares */
+
+      n_transfer = optimal_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k,
+          ic1, ic2, change, itran, loss, live, kern_cross, kernel_matrix, fo1, fo2);
+      notran++;
+
+      /* if no transfer took place in the optimal transfer stage, then stop */
+      /* (because none of the points will be in the live set) */
+       
+      // TODO: change the exit criteria. 
+      // could use minimum number of transfers
+      // could use epsilon cutoff for wss
+      if (!n_transfer)
+        break;
+
+      /* change needs to be set back to zero before re-entering the optimal
+       * transfer stage */
+      memset(&change[0], 0, k * sizeof(int));
+
+    }
     else
     {
       error("Incorrect heuristic");
@@ -248,7 +272,7 @@ void kcluster(double *x,
       fo = 0.;
       for (j = 0; j < n; j++)
       {
-        if(ic1[j] != l) continue;
+        if(ic1[j] != l || j == i) continue;
         fo += kernel_matrix[get_index(i, j, n)];
       }
 
