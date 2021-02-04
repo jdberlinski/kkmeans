@@ -99,7 +99,7 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000
       lowest_res <- retlist
     }
   }
-  names(lowest_res) <- c("cluster", "centers", "wss")
+  names(lowest_res) <- c("cluster", "centers", "wss", "niter")
   lowest_res$param <- param
   # }
 

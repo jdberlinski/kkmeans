@@ -1,7 +1,7 @@
 #include <Rinternals.h>
 #include <R.h>
 
-void kcluster(double *x, int n, int p, int k, int iter_max,
+int kcluster(double *x, int n, int p, int k, int iter_max,
     double *kernel_matrix, double *mu, double *sse, int *ic1, int heuristic);
 void get_kernel_matrix(double *x, int n, int p, double h,
                        double  (*kernel)(int, int, double*, int, int, double),
@@ -87,18 +87,24 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max, SEXP
 
   /*  */
 
+  int n_iter;
+  SEXP niter;
+  
   get_kernel_matrix(x, n, p, h, kernel, kernel_matrix);
-  kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, heuristic);
+  n_iter = kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, heuristic);
 
   /* Create some return values for R */
   PROTECT(cluster_out = allocVector(INTSXP , n));
   PROTECT(mu_out      = allocMatrix(REALSXP, k, p));
   PROTECT(sse_out     = allocVector(REALSXP, k));
-  PROTECT(ret_list    = allocVector(VECSXP , 3));
+  PROTECT(niter       = allocVector(INTSXP , 1));
+  PROTECT(ret_list    = allocVector(VECSXP , 4));
 
   double *pmu;
   double *psse;
   int    *pcluster;
+  
+  INTEGER(niter)[0] = n_iter;
 
   pcluster = INTEGER(cluster_out);
   for (j = 0; j < n; j++)
@@ -116,10 +122,12 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max, SEXP
   SET_VECTOR_ELT(ret_list, 0, cluster_out);
   SET_VECTOR_ELT(ret_list, 1, mu_out);
   SET_VECTOR_ELT(ret_list, 2, sse_out);
+  SET_VECTOR_ELT(ret_list, 3, niter);
+  
 
   // TODO: it's easier to set names in R, but it might be better to set them
   // here. Look into it.
-  UNPROTECT(4);
+  UNPROTECT(5);
 
   return ret_list;
 }

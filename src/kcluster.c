@@ -29,7 +29,7 @@
  * @param *ic1      - n array of closest cluster indicator
  * @param  heuristic - integer indication of which algorithm to run
  */
-void kcluster(double *x,
+int kcluster(double *x,
               int     n,
               int     p,
               int     k,
@@ -146,6 +146,7 @@ void kcluster(double *x,
   int nqtran, notran;
   nqtran = 0;
   notran = 0;
+  int npass = 0;
   for (int iter = 0; iter < iter_max; iter++)
   {
 
@@ -161,6 +162,8 @@ void kcluster(double *x,
 
       /* if no transfer took place in the optimal transfer stage, then stop */
       /* (because none of the points will be in the live set) */
+      
+      npass++;
       if (!n_transfer)
         break;
 
@@ -187,6 +190,7 @@ void kcluster(double *x,
       n_transfer = macqueen_step(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1,
           loss, kern_cross, kernel_matrix, fo1);
 
+      npass++;
       if (!n_transfer) break;
     }
     else if (heuristic == 3)
@@ -226,6 +230,7 @@ void kcluster(double *x,
       }
 
 
+      npass++;
       if (!n_transfer) break;
     }
     else if (heuristic == 4)
@@ -244,6 +249,7 @@ void kcluster(double *x,
       // TODO: change the exit criteria. 
       // could use minimum number of transfers
       // could use epsilon cutoff for wss
+      npass++;
       if (!n_transfer)
         break;
 
@@ -308,7 +314,7 @@ void kcluster(double *x,
     /* } */
   }
 
-  return;
+  return npass;
 }
 
 /*
@@ -573,9 +579,20 @@ void quick_transfer(double *x,
 
   nstep = 0;
 
+  double old_sse = big;
+  double epsilon = .01;
+
   while (1)
   {
     flag = 0;
+
+    if (nstep > 0) 
+    {
+      old_sse = 0;
+      for (i = 0; i < n; i++)
+        old_sse += loss[i];
+    }
+    
     for (i = 0; i < n; i++)
     {
       c1 = ic1[i];
@@ -664,7 +681,14 @@ void quick_transfer(double *x,
       }
     }
 
-    if (!flag) return;
+    acc = 0;
+    for (i = 0; i < n; i++) 
+      acc += loss[i];
+
+    // Rprintf("%f\n", (old_sse - acc) / old_sse);
+    // Rprintf("%f\n", old_sse);
+
+    if (!flag || (old_sse - acc) / old_sse < epsilon) return;
   }
 }
 
