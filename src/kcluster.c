@@ -29,7 +29,7 @@
  * @param *ic1      - n array of closest cluster indicator
  * @param  heuristic - integer indication of which algorithm to run
  */
-void kcluster(double *x,
+int kcluster(double *x,
               int     n,
               int     p,
               int     k,
@@ -146,6 +146,7 @@ void kcluster(double *x,
   int nqtran, notran;
   nqtran = 0;
   notran = 0;
+  int npass = 0;
   for (int iter = 0; iter < iter_max; iter++)
   {
 
@@ -161,6 +162,8 @@ void kcluster(double *x,
 
       /* if no transfer took place in the optimal transfer stage, then stop */
       /* (because none of the points will be in the live set) */
+      
+      npass++;
       if (!n_transfer)
         break;
 
@@ -187,6 +190,7 @@ void kcluster(double *x,
       n_transfer = macqueen_step(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1,
           loss, kern_cross, kernel_matrix, fo1);
 
+      npass++;
       if (!n_transfer) break;
     }
     else if (heuristic == 3)
@@ -226,7 +230,33 @@ void kcluster(double *x,
       }
 
 
+      npass++;
       if (!n_transfer) break;
+    }
+    else if (heuristic == 4)
+    {
+      /* The optimal transfer stage passes through the data once, reallocating
+       * each point to the cluster that will yield the greatest reduction of
+       * within-cluster sum of squares */
+
+      n_transfer = optimal_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k,
+          ic1, ic2, change, itran, loss, live, kern_cross, kernel_matrix, fo1, fo2);
+      notran++;
+
+      /* if no transfer took place in the optimal transfer stage, then stop */
+      /* (because none of the points will be in the live set) */
+       
+      // TODO: change the exit criteria. 
+      // could use minimum number of transfers
+      // could use epsilon cutoff for wss
+      npass++;
+      if (!n_transfer)
+        break;
+
+      /* change needs to be set back to zero before re-entering the optimal
+       * transfer stage */
+      memset(&change[0], 0, k * sizeof(int));
+
     }
     else
     {
@@ -248,7 +278,7 @@ void kcluster(double *x,
       fo = 0.;
       for (j = 0; j < n; j++)
       {
-        if(ic1[j] != l) continue;
+        if(ic1[j] != l || j == i) continue;
         fo += kernel_matrix[get_index(i, j, n)];
       }
 
@@ -285,7 +315,7 @@ void kcluster(double *x,
     /* } */
   }
 
-  return;
+  return npass;
 }
 
 /*
@@ -550,9 +580,20 @@ void quick_transfer(double *x,
 
   nstep = 0;
 
+  double old_sse = big;
+  double epsilon = .01;
+
   while (1)
   {
     flag = 0;
+
+    if (nstep > 0) 
+    {
+      old_sse = 0;
+      for (i = 0; i < n; i++)
+        old_sse += loss[i];
+    }
+    
     for (i = 0; i < n; i++)
     {
       c1 = ic1[i];
@@ -641,7 +682,14 @@ void quick_transfer(double *x,
       }
     }
 
-    if (!flag) return;
+    acc = 0;
+    for (i = 0; i < n; i++) 
+      acc += loss[i];
+
+    // Rprintf("%f\n", (old_sse - acc) / old_sse);
+    // Rprintf("%f\n", old_sse);
+
+    if (!flag || (old_sse - acc) / old_sse < epsilon) return;
   }
 }
 

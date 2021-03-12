@@ -41,11 +41,11 @@
 #' result <- kkmeans(data, k = 3, kern = "g", estimate = "mknn", nn = 3)
 kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000L, estimate = F,
                     nn = 0, init_centers = sample(1:k, size = nrow(data), replace = TRUE),
-                    method = c("otqt", "macqueen", "lloyd")) {
+                    method = c("otqt", "macqueen", "lloyd", "ot")) {
 
   valid_kerns = c("gaussian", "poly")
   valid_prefs = c("g", "p")
-  valid_methods = c("otqt", "macqueen", "lloyd")
+  valid_methods = c("otqt", "macqueen", "lloyd", "ot")
 
   # some light error checking
   if ( !(kern %in% valid_kerns) & !(kern %in% valid_prefs) )
@@ -66,7 +66,7 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000
   # if (depth > 0 && kern != "g" && kern != "gaussian")
   #   stop("If depth > 0, `kern` must be gaussian.")
 
-  if (!is.integer(init_centers))
+  if (!is.integer(init_centers) || min(init_centers) > 0)
     init_centers <- as.integer(init_centers - 1)
   else
     init_centers <- init_centers - 1L
@@ -99,7 +99,7 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000
       lowest_res <- retlist
     }
   }
-  names(lowest_res) <- c("cluster", "centers", "wss")
+  names(lowest_res) <- c("cluster", "centers", "wss", "niter")
   lowest_res$param <- param
   # }
 
