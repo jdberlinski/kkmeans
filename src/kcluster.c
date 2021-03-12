@@ -257,6 +257,7 @@ void kcluster(double *x,
     }
   }
 
+  // TODO: change to memset (faster)
   for (l = 0; l < k; l++)
   {
     /* sse[l] = 0.; */
@@ -681,6 +682,7 @@ int rand_multinom(int n, double *probs)
   return -1;
 }
 
+// TODO: these shouldn't be inthis file?
 void get_kernel_matrix(double *x,
                        int     n,
                        int     p,
@@ -698,6 +700,27 @@ void get_kernel_matrix(double *x,
   }
   return;
 }
+
+void center_kernel_matrix(double *kernel_matrix, int n)
+{
+  double *rowmeans = (double *) S_alloc(n, sizeof(double));
+  double acc;
+  double summean = 0;
+  for (int i = 0; i < n; i++)
+  {
+    acc = 0;
+    for(int j = 0; j < n; j++)
+      acc += kernel_matrix[get_index(i, j, n)];
+    rowmeans[i] = acc / n;
+    summean += rowmeans[i];
+  }
+  summean /= n;
+  for (int i = 0; i < n; i++)
+    for (int j = 0; j <= i; j++)
+      kernel_matrix[get_index(i, j, n)] += summean - rowmeans[i] - rowmeans[j];
+  return;
+}
+
 
 int macqueen_step(double *x,
                   double *mu,

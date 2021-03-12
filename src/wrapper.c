@@ -6,6 +6,7 @@ void kcluster(double *x, int n, int p, int k, int iter_max,
 void get_kernel_matrix(double *x, int n, int p, double h,
                        double  (*kernel)(int, int, double*, int, int, double),
                        double *kernel_matrix);
+void center_kernel_matrix(double *kernel_matrix, int n);
 double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq);
 double kernel_poly(int i, int j, double *x, int n, int p, double h);
 
@@ -88,6 +89,7 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max, SEXP
   /*  */
 
   get_kernel_matrix(x, n, p, h, kernel, kernel_matrix);
+  center_kernel_matrix(kernel_matrix, n);
   kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, heuristic);
 
   /* Create some return values for R */
