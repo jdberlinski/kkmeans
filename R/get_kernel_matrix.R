@@ -18,7 +18,7 @@ get_kernel_matrix <- function(data, kern = "g", param = 1) {
   if ( !(kern %in% valid_kerns) & !(kern %in% valid_prefs) )
     stop(paste0("`kern` must be one of ", paste(valid_kerns, collapse = ", "), "."))
   if ( !is.matrix(data) ) {
-    warning("Converting data to matrix.")
+    # warning("Converting data to matrix.")
     data <- as.matrix(data)
   }
 

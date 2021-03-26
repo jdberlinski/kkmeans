@@ -12,6 +12,6 @@ get_mknn_dist(data, k = F)
 \item{k}{which neighbor to average over}
 }
 \description{
-given a dataset and a value k, will return the value of the
+Given a dataset and a value k, will return the value of the
 average distance from each point to it's k-nearest neighbor
 }

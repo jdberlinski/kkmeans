@@ -14,7 +14,7 @@ kkmeans(
   estimate = F,
   nn = 0,
   init_centers = sample(1:k, size = nrow(data), replace = TRUE),
-  method = c("otqt", "macqueen", "lloyd")
+  method = c("otqt", "macqueen", "lloyd", "ot")
 )
 }
 \arguments{

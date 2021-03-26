@@ -110,6 +110,13 @@ int kcluster(double *x,
   for (l = 0; l < k; l++)
   {
     kern_cross[l] = 0.;
+    if (!n_k[l])
+    {
+      i = rand_dunif(n);
+      ic1[i] = l;
+      n_k[l]++;
+      ic2[i] = (ic1[i] + 1) % k;
+    }
     for (i = 0; i < n; i++)
     {
       if (ic1[i] == l)
@@ -162,7 +169,7 @@ int kcluster(double *x,
 
       /* if no transfer took place in the optimal transfer stage, then stop */
       /* (because none of the points will be in the live set) */
-      
+
       npass++;
       if (!n_transfer)
         break;
@@ -245,8 +252,8 @@ int kcluster(double *x,
 
       /* if no transfer took place in the optimal transfer stage, then stop */
       /* (because none of the points will be in the live set) */
-       
-      // TODO: change the exit criteria. 
+
+      // TODO: change the exit criteria.
       // could use minimum number of transfers
       // could use epsilon cutoff for wss
       npass++;
@@ -269,10 +276,22 @@ int kcluster(double *x,
   // I think kern_cross may need to be updated.
   for (l = 0; l < k; l++)
   {
+    kern_cross[l] = 0;
+    for (i = 0; i < n; i++)
+      if (ic1[i] == l)
+        for (j = 0; j < n; j++)
+          if (ic1[j] == l)
+            kern_cross[l] += kernel_matrix[get_index(i, j, n)];
+  }
+  for (l = 0; l < k; l++)
+  {
     sse[l] = 0;
+    /* n_k[l] = 0; */
     for (i = 0; i < n; i++)
     {
+      fo1[i] = 0;
       if (ic1[i] != l) continue;
+      /* n_k[l]++; */
       sse[l] += kernel_matrix[get_index(i, i, n)];
       sse[l] += 1. / (n_k[l] * n_k[l]) * kern_cross[l];
       fo = 0.;
@@ -282,9 +301,12 @@ int kcluster(double *x,
         fo += kernel_matrix[get_index(i, j, n)];
       }
 
+      fo1[i] = fo;
       fo /= n_k[l];
       sse[l] -= 2*fo;
     }
+    /* for (j = 0; j < n; j++) */
+    /*   sse[l] += ((double) n_k[l]) * fo1[j]; */
   }
 
   // TODO: change to memset (faster)
@@ -587,13 +609,13 @@ void quick_transfer(double *x,
   {
     flag = 0;
 
-    if (nstep > 0) 
+    if (nstep > 0)
     {
       old_sse = 0;
       for (i = 0; i < n; i++)
         old_sse += loss[i];
     }
-    
+
     for (i = 0; i < n; i++)
     {
       c1 = ic1[i];
@@ -683,7 +705,7 @@ void quick_transfer(double *x,
     }
 
     acc = 0;
-    for (i = 0; i < n; i++) 
+    for (i = 0; i < n; i++)
       acc += loss[i];
 
     // Rprintf("%f\n", (old_sse - acc) / old_sse);

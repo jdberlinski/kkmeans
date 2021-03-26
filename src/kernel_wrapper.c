@@ -60,6 +60,7 @@ SEXP get_k_matrix(SEXP data, SEXP kern, SEXP param)
 
   double *kernel_matrix = (double *) S_alloc(n * n, sizeof(double));
 
+  // TODO: center kernel matrix
   get_kernel_matrix(x, n, p, h, kernel, kernel_matrix);
 
   PROTECT(kmatrix = allocMatrix(REALSXP, n, n));
