@@ -5,10 +5,17 @@
  * File containing all of the kernel functions for the algorithm
  *
  */
-#include <math.h>
 
+#include <math.h>
+#include <Rmath.h>
+
+int is_na(double value);
 double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq);
 double kernel_poly(int i, int j, double *x, int n, int p, double h);
+
+int is_na(double value) {
+  return value != value;
+}
 
 /*
  *  Gaussian RBF kernel
@@ -26,7 +33,10 @@ double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq)
 {
   double norm = 0.;
   for (int r = 0 ; r < p ; r++)
-    norm += (x[i + r*n] - x[j + r*n]) * (x[i + r*n] - x[j + r*n]);
+  {
+    if (!is_na(x[i + r*n]) && !is_na(x[j + r*n]))
+      norm +=  (x[i + r*n] - x[j + r*n]) * (x[i + r*n] - x[j + r*n]);
+  }
 
   return (exp(-0.5 * norm / sigmasq));
 }
@@ -47,7 +57,10 @@ double kernel_poly(int i, int j, double *x, int n, int p, double h)
 {
   double prod = 0.;
   for (int r = 0; r < p; r++)
-    prod += x[i + r*n] * x[j + r*n];
+  {
+    if (!is_na(x[i + r*n]) && !is_na(x[j + r*n]))
+      prod += x[i + r*n] * x[j + r*n];
+  }
 
   return (pow(prod + 1, h));
 }

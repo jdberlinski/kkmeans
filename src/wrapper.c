@@ -92,7 +92,7 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max, SEXP
   SEXP niter;
 
   get_kernel_matrix(x, n, p, h, kernel, kernel_matrix);
-  center_kernel_matrix(kernel_matrix, n);
+  /* center_kernel_matrix(kernel_matrix, n); */
   kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, heuristic);
   n_iter = kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, heuristic);
 

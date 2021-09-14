@@ -317,6 +317,10 @@ int kcluster(double *x,
       mu[l + j*k] = 0.;
   }
 
+  // TODO (josh 2021/09/05): to get rid of the errors when using NA values, have
+  // to change how mu is calculted, make it such that each component gets
+  // divided by the number of non-missing values in the cluster (for that
+  // component).
   for (i = 0; i < n; i++)
   {
     ii = ic1[i];
