@@ -40,6 +40,11 @@ int kcluster(double *x,
               int    *ic1,
               int     heuristic)
 {
+  // TODO (josh 2021/09/14): need to add something for fuzzy clustering?
+  // in that case, I think ic1 would be a matrix? then we would have to have a
+  // ton of for loops thrown around to make sure that everything is being
+  // handled correctly
+
   /* n_minus is n_k / (n_k - 1),  n_plus is n_k / (n_k + 1)*/
   double *n_minus = (double *) S_alloc(k, sizeof(double));
   double *n_plus  = (double *) S_alloc(k, sizeof(double));
