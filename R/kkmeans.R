@@ -21,6 +21,7 @@
 #' @param method Which method to use for kernel k-means iteration. One of ("otqt", "macqueen", "lloyd").
 #' "otqt" is a method using optimal-transfer and quick-transfer heuristics similar to the Hartigan and
 #' Wong algorithm for k-means clustering.
+#' @param kmat kernel matrix, if using a custom kernel
 #' @return A list containing the following useful information
 #' \describe{
 #'   \item{cluster}{The final cluster membership.}
@@ -41,7 +42,7 @@
 #' result <- kkmeans(data, k = 3, kern = "g", estimate = "mknn", nn = 3)
 kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000L, estimate = F,
                     nn = 0, init_centers = sample(1:k, size = nrow(data), replace = TRUE),
-                    method = c("otqt", "macqueen", "lloyd", "ot"), trueest = F) {
+                    method = c("otqt", "macqueen", "lloyd", "ot"), trueest = F, kmat = NULL) {
 
   valid_kerns = c("gaussian", "poly")
   valid_prefs = c("g", "p")
@@ -90,9 +91,12 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000
   method <- which(valid_methods == method[[1]])
   lowest_wss <- Inf
   lowest_res <- NULL
-  K <- get_kernel_matrix(data, kern, param)
+  if (is.null(kmat))
+    K <- get_kernel_matrix(data, kern, param)
+  else
+    K <- kmat
   for (i in 1:nstart) {
-    retlist <- .Call('kkmeans', data, k, kern, param, iter_max, init_centers, method)
+    retlist <- .Call('kkmeans', data, k, kern, param, iter_max, init_centers, method, K)
     # fix WSS?
     if (trueest) {
       wss_vals <- Map(function(k) {

@@ -23,7 +23,7 @@ double kernel_poly(int i, int j, double *x, int n, int p, double h);
 //' @param params parameters to pass to kernel function.
 //' @export
 SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max, SEXP init_centers,
-             SEXP method)
+             SEXP method, SEXP kmat)
 {
   SEXP dims = getAttrib(data, R_DimSymbol);
   SEXP cluster_out;
@@ -91,7 +91,8 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max, SEXP
   int n_iter;
   SEXP niter;
 
-  get_kernel_matrix(x, n, p, h, kernel, kernel_matrix);
+  /* get_kernel_matrix(x, n, p, h, kernel, kernel_matrix); */
+  kernel_matrix = REAL(kmat);
   /* center_kernel_matrix(kernel_matrix, n); */
   kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, heuristic);
   n_iter = kcluster(x, n, p, k, imax, kernel_matrix, mu, sse, ic1, heuristic);
