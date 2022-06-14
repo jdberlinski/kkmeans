@@ -14,7 +14,9 @@ kkmeans(
   estimate = F,
   nn = 0,
   init_centers = sample(1:k, size = nrow(data), replace = TRUE),
-  method = c("otqt", "macqueen", "lloyd", "ot")
+  method = c("otqt", "macqueen", "lloyd", "ot"),
+  trueest = F,
+  kmat = NULL
 )
 }
 \arguments{
@@ -44,6 +46,8 @@ than 1, any start beyond the first iteration will use randomized centers.}
 \item{method}{Which method to use for kernel k-means iteration. One of ("otqt", "macqueen", "lloyd").
 "otqt" is a method using optimal-transfer and quick-transfer heuristics similar to the Hartigan and
 Wong algorithm for k-means clustering.}
+
+\item{kmat}{kernel matrix, if using a custom kernel}
 }
 \value{
 A list containing the following useful information
