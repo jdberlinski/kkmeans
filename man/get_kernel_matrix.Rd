@@ -12,7 +12,7 @@ get_kernel_matrix(data, kern = "g", param = 1)
 \item{kern}{the kernel to use, one of ('gaussian', 'poly'), can use first
 letter}
 
-\item{params}{parameters to pass to kernel function.}
+\item{param}{parameter to pass to kernel function.}
 }
 \description{
 Given a dataset, kernel function, and tuning parameter, will

@@ -47,6 +47,9 @@ than 1, any start beyond the first iteration will use randomized centers.}
 "otqt" is a method using optimal-transfer and quick-transfer heuristics similar to the Hartigan and
 Wong algorithm for k-means clustering.}
 
+\item{trueest}{Whether or not the within-cluster sum of squares should be
+recomputed in R after clustering is finished}
+
 \item{kmat}{kernel matrix, if using a custom kernel}
 }
 \value{

@@ -6,6 +6,7 @@
 #'
 #' @param data the data vector
 #' @param k which neighbor to average over
+#' @importFrom stats dist
 #' @export
 get_mknn_dist <- function(data, k = F) {
   if (!k) k <- round(log2(nrow(data)) + 1)

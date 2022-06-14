@@ -9,6 +9,7 @@
 #' @param grid parameter grid to search on
 #' @param tol tolerence for choosing the "best" sigma values. Reducing the
 #' tolerance will give larger values of the bandwidth parameter
+#' @importFrom stats quantile model.matrix
 #' @export
 matr <- function(dat, k, grid, tol = 0.01) {
   l <- numeric(length(grid))

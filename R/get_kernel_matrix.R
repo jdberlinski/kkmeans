@@ -7,7 +7,7 @@
 #' @param data data vector
 #' @param kern the kernel to use, one of ('gaussian', 'poly'), can use first
 #' letter
-#' @param params parameters to pass to kernel function.
+#' @param param parameter to pass to kernel function.
 #' @export
 get_kernel_matrix <- function(data, kern = "g", param = 1) {
 

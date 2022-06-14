@@ -21,6 +21,8 @@
 #' @param method Which method to use for kernel k-means iteration. One of ("otqt", "macqueen", "lloyd").
 #' "otqt" is a method using optimal-transfer and quick-transfer heuristics similar to the Hartigan and
 #' Wong algorithm for k-means clustering.
+#' @param trueest Whether or not the within-cluster sum of squares should be
+#' recomputed in R after clustering is finished
 #' @param kmat kernel matrix, if using a custom kernel
 #' @return A list containing the following useful information
 #' \describe{

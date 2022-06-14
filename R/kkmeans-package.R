@@ -1,5 +1,6 @@
 ## usethis namespace: start
-#' @useDynLib kkmeans
 #' @importFrom Rcpp sourceCpp
+#' @useDynLib kkmeans
+#' @useDynLib kkmeans, .registration = TRUE
 ## usethis namespace: end
 NULL

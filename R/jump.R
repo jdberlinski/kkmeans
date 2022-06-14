@@ -1,14 +1,17 @@
 #' Function to get jump statistic for varying values of k
 #' @name jump_stat
 #'
-#' @description
+#' @description Obtains the jump statistic for a particular kernel for the
+#' specified number of clusters
 #'
-#' @param data
-#' @param kern
-#' @param param
-#' @param k_max
-#' @param eta
-#' @param iter_max
+#' @param data Numeric data to cluster. This will be converted to a matrix using `as.matrix`.
+#' @param kern The kernel to use.
+#' @param param The parameter value to pass to the kernel
+#' @param k_max The maximum number of clusters to consider
+#' @param eta Power for the jump statistic
+#' @param iter_max Maximum number of iterations to use in `kkmeans` call
+#' @return Sum of squares and value of jump statistic for 1, ..., K chosen
+#' clusters
 #' @export
 jump_stat <- function(data, kern = "g", param = 1, k_max, eta, iter_max = 1000L) {
   valid_kerns = c("gaussian", "poly")

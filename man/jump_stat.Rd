@@ -6,6 +6,24 @@
 \usage{
 jump_stat(data, kern = "g", param = 1, k_max, eta, iter_max = 1000L)
 }
-\description{
+\arguments{
+\item{data}{Numeric data to cluster. This will be converted to a matrix using \code{as.matrix}.}
 
+\item{kern}{The kernel to use.}
+
+\item{param}{The parameter value to pass to the kernel}
+
+\item{k_max}{The maximum number of clusters to consider}
+
+\item{eta}{Power for the jump statistic}
+
+\item{iter_max}{Maximum number of iterations to use in \code{kkmeans} call}
+}
+\value{
+Sum of squares and value of jump statistic for 1, ..., K chosen
+clusters
+}
+\description{
+Obtains the jump statistic for a particular kernel for the
+specified number of clusters
 }
