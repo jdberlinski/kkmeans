@@ -44,7 +44,7 @@
 #' result <- kkmeans(data, k = 3, kern = "g", estimate = "mknn", nn = 3)
 kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000L, estimate = F,
                     nn = 0, init_centers = sample(1:k, size = nrow(data), replace = TRUE),
-                    method = c("otqt", "macqueen", "lloyd", "ot"), trueest = F, kmat = NULL) {
+                    method = c("otqt", "macqueen", "lloyd", "ot"), trueest = F, kmat = NULL, random_centers = TRUE) {
 
   valid_kerns = c("gaussian", "poly")
   valid_prefs = c("g", "p")
@@ -68,11 +68,19 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000
 
   # if (depth > 0 && kern != "g" && kern != "gaussian")
   #   stop("If depth > 0, `kern` must be gaussian.")
+  use_centers <- FALSE
 
-  if (!is.integer(init_centers) || min(init_centers) > 0)
+  if (length(init_centers) == k) {
+    candidate_centers <- init_centers
+    init_centers <- rep(0, nrow(data))
+    nstart <- 1
+    random_centers <- FALSE
+    use_centers <- TRUE
+  } else if (!is.integer(init_centers) || min(init_centers) > 0) {
     init_centers <- as.integer(init_centers - 1)
-  else
+  } else {
     init_centers <- init_centers - 1L
+  }
   if (max(init_centers) > k - 1 || min(init_centers) < 0)
     stop("Initial centers must be between 1 and k")
 
@@ -97,7 +105,24 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000
     K <- get_kernel_matrix(data, kern, param)
   else
     K <- kmat
+
   for (i in 1:nstart) {
+    # if random centers, then choose k points to be the initial centers, and
+    # assign other points to their closest one
+    if (random_centers | use_centers) {
+      if (random_centers)
+        candidate_centers <- sample(nrow(data), k)
+      init_centers[candidate_centers] <- 0:(k - 1)
+      for (j in seq_len(nrow(data))) {
+        if (j %in% candidate_centers) next
+        dvec <- numeric(k)
+        for (l in seq_len(k))
+          dvec[l] <- K[j, j] + K[candidate_centers[l], candidate_centers[l]] - 2*K[j, candidate_centers[l]]
+        init_centers[j] <- which.min(dvec) - 1
+      }
+      init_centers <- as.integer(init_centers)
+    }
+
     retlist <- .Call('kkmeans', data, k, kern, param, iter_max, init_centers, method, K)
     # fix WSS?
     if (trueest) {
@@ -107,13 +132,14 @@ kkmeans <- function(data, k, kern = "g", param = 1, nstart = 10, iter_max = 1000
                         nk <- length(inclust)
                         J <- matrix(1, nrow = nk, ncol = nk)
                         C <- Ks - J %*% Ks / nk - Ks %*% J / nk + J %*% Ks %*% J / nk^2
-                        sum(rowSums(C^2))
+                        sum(diag(C))
                       },
                       1:k)
       retlist[[3]] <- Reduce(c, wss_vals)
     }
     # re-randomize clusters if running more than once
-    init_centers <- as.integer(sample(1:k, size = nrow(data), replace = TRUE) - 1)
+    if (!random_centers)
+      init_centers <- as.integer(sample(1:k, size = nrow(data), replace = TRUE) - 1)
     if (sum(retlist[[3]]) < lowest_wss) {
       lowest_wss <- sum(retlist[[3]])
       lowest_res <- retlist

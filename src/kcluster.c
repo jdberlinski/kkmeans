@@ -176,7 +176,8 @@ int kcluster(double *x,
       /* (because none of the points will be in the live set) */
 
       npass++;
-      if (!n_transfer)
+      /* if (!n_transfer) */
+      if (n_transfer == 0)
         break;
 
       quick_transfer(x, mu, sse, n_minus, n_plus, n_k, n, p, k, ic1, ic2, change,
@@ -203,7 +204,7 @@ int kcluster(double *x,
           loss, kern_cross, kernel_matrix, fo1);
 
       npass++;
-      if (!n_transfer) break;
+      if (n_transfer == 0) break;
     }
     else if (heuristic == 3)
     {
@@ -496,8 +497,11 @@ int optimal_transfer(double *x,
       change[c2] = i;
 
 
-      kern_cross[c1] -= 2*fo1[i] + self_kern;
-      kern_cross[c2] += 2*fo2[i] + 2*self_kern;
+      /* CHANGED HERE */
+      /* kern_cross[c1] -= 2*fo1[i] + self_kern; */
+      /* kern_cross[c2] += 2*fo2[i] + 2*self_kern; */
+      kern_cross[c1] -= 2*fo1[i] - self_kern;
+      kern_cross[c2] += 2*fo2[i] + self_kern;
 
       n_k[c1]--;
       n_k[c2]++;
@@ -675,7 +679,9 @@ void quick_transfer(double *x,
         change[c1] = nstep + n;
         change[c2] = nstep + n;
 
-        kern_cross[c1] -= 2*fo1[i] + self_kern;
+        /* changed here */
+        /* kern_cross[c1] -= 2*fo1[i] + self_kern; */
+        kern_cross[c1] -= 2*fo1[i] - self_kern;
         kern_cross[c2] += 2*fo2[i] + self_kern;
 
         n_k[c1]--;
@@ -874,8 +880,11 @@ int macqueen_step(double *x,
     {
       n_transfer++;
 
-      kern_cross[c1] -= 2*fo1[i] + self_kern;
-      kern_cross[c2] += 2*fo_low + 2*self_kern;
+      /* changed here */
+      /* kern_cross[c1] -= 2*fo1[i] + self_kern; */
+      /* kern_cross[c2] += 2*fo_low + 2*self_kern; */
+      kern_cross[c1] -= 2*fo1[i] - self_kern;
+      kern_cross[c2] += 2*fo_low + self_kern;
 
       n_k[c1]--;
       n_k[c2]++;
