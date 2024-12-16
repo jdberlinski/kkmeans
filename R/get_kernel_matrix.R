@@ -9,10 +9,10 @@
 #' letter
 #' @param param parameter to pass to kernel function.
 #' @export
-get_kernel_matrix <- function(data, kern = "g", param = 1) {
+get_kernel_matrix <- function(data, kern = "g", param = 1, param2 = 1) {
 
-  valid_kerns = c("gaussian", "poly")
-  valid_prefs = c("g", "p")
+  valid_kerns = c("gaussian", "poly", "sigmoid")
+  valid_prefs = c("g", "p", "s")
 
   # some light error checking
   if ( !(kern %in% valid_kerns) & !(kern %in% valid_prefs) )
@@ -22,7 +22,7 @@ get_kernel_matrix <- function(data, kern = "g", param = 1) {
     data <- as.matrix(data)
   }
 
-  kernel_matrix <- .Call('get_k_matrix', data, kern, param)
+  kernel_matrix <- .Call('get_k_matrix', data, kern, param, param2)
 
   return(kernel_matrix)
 }

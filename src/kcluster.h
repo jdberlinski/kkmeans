@@ -72,7 +72,8 @@ int rand_multinom(int n, double *probs);
 void get_kernel_matrix(double *x,
                        int     n,
                        int     p,
-                       double  h,
-                       double  (*kernel)(int, int, double*, int, int, double),
+                       double  h1,
+                       double  h2,
+                       double  (*kernel)(int, int, double*, int, int, double, double),
                        double *kernel_matrix);
 void init_centers(int n, int k, int *ic1, int *ic2, int *n_k, double *kernel_matrix);

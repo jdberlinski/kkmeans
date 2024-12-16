@@ -3,12 +3,13 @@
 
 int kcluster(double *x, int n, int p, int k, int iter_max,
     double *kernel_matrix, double *mu, double *sse, int *ic1, int heuristic);
-void get_kernel_matrix(double *x, int n, int p, double h,
-                       double  (*kernel)(int, int, double*, int, int, double),
+void get_kernel_matrix(double *x, int n, int p, double h1, double h2,
+                       double  (*kernel)(int, int, double*, int, int, double, double),
                        double *kernel_matrix);
 void center_kernel_matrix(double *kernel_matrix, int n);
-double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq);
-double kernel_poly(int i, int j, double *x, int n, int p, double h);
+double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq, double blank);
+double kernel_poly(int i, int j, double *x, int n, int p, double h, double a);
+double kernel_sigmoid(int i, int j, double *x, int n, int p, double theta0, double theta1);
 
 //' An Efficient Kernel K-Means Algorithm
 //' @name kkmeans
@@ -63,7 +64,7 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max, SEXP
   int    heuristic = *heur_ptr;
   double h         = *h_ptr;
 
-  double (*kernel)(int, int, double[], int, int, double);
+  double (*kernel)(int, int, double[], int, int, double, double);
   kernel = NULL;
 
   const char *kern_string = CHAR(STRING_ELT(kern, 0));
@@ -72,6 +73,8 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max, SEXP
     kernel = &kernel_gaussian;
   else if (strcmp(kern_string, "poly") == 0 || strcmp(kern_string, "p") == 0)
     kernel = &kernel_poly;
+  else if (strcmp(kern_string, "sigmoid") == 0 || strcmp(kern_string, "s") == 0)
+    kernel = &kernel_sigmoid;
   else
     error("Error: `kern` is not recognized.");
 

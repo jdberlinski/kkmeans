@@ -4,10 +4,12 @@ void get_kernel_matrix(double *x,
                        int     n,
                        int     p,
                        double  h,
-                       double  (*kernel)(int, int, double*, int, int, double),
+                       double  h2,
+                       double  (*kernel)(int, int, double*, int, int, double, double),
                        double *kernel_matrix);
-double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq);
-double kernel_poly(int i, int j, double *x, int n, int p, double h);
+double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq, double blank);
+double kernel_poly(int i, int j, double *x, int n, int p, double h, double a);
+double kernel_sigmoid(int i, int j, double *x, int n, int p, double theta0, double theta1);
 
 //' Get the kernel matrix for a dataset
 //' @name get_k_matrix
@@ -20,7 +22,7 @@ double kernel_poly(int i, int j, double *x, int n, int p, double h);
 //' letter
 //' @param params parameters to pass to kernel function.
 //' @export
-SEXP get_k_matrix(SEXP data, SEXP kern, SEXP param)
+SEXP get_k_matrix(SEXP data, SEXP kern, SEXP param, SEXP param2)
 {
   SEXP dims = getAttrib(data, R_DimSymbol);
   SEXP kmatrix;
@@ -39,10 +41,12 @@ SEXP get_k_matrix(SEXP data, SEXP kern, SEXP param)
   int     n        = INTEGER(dims)[0];
   int     p        = INTEGER(dims)[1];
   double *h_ptr    = REAL(param);
+  double *h2_ptr    = REAL(param2);
 
   double h    = *h_ptr;
+  double h2    = *h2_ptr;
 
-  double (*kernel)(int, int, double[], int, int, double);
+  double (*kernel)(int, int, double[], int, int, double, double);
   kernel = NULL;
 
   const char *kern_string = CHAR(STRING_ELT(kern, 0));
@@ -51,6 +55,8 @@ SEXP get_k_matrix(SEXP data, SEXP kern, SEXP param)
     kernel = &kernel_gaussian;
   else if (strcmp(kern_string, "poly") == 0 || strcmp(kern_string, "p") == 0)
     kernel = &kernel_poly;
+  else if (strcmp(kern_string, "sigmoid") == 0 || strcmp(kern_string, "s") == 0)
+    kernel = &kernel_sigmoid;
   else
     error("Error: `kern` is not recognized.");
 
@@ -61,7 +67,7 @@ SEXP get_k_matrix(SEXP data, SEXP kern, SEXP param)
   double *kernel_matrix = (double *) S_alloc(n * n, sizeof(double));
 
   // TODO: center kernel matrix
-  get_kernel_matrix(x, n, p, h, kernel, kernel_matrix);
+  get_kernel_matrix(x, n, p, h, h2, kernel, kernel_matrix);
 
   PROTECT(kmatrix = allocMatrix(REALSXP, n, n));
 
