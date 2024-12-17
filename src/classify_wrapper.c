@@ -140,7 +140,7 @@ SEXP classify_kkmeans(SEXP test_data, SEXP train_data, SEXP labels, SEXP kern, S
   PROTECT(cluster_out = allocVector(INTSXP, n_test));
   int *pcluster;
   pcluster = INTEGER(cluster_out);
-  for  (int i = 0; i < n_train; i++)
+  for  (int i = 0; i < n_test; i++)
     pcluster[i] = test_labels[i] + 1;
   UNPROTECT(1);
 
