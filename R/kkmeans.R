@@ -146,9 +146,10 @@ kkmeans <- function(data, k, kern = "g", param = 1, param2 = 1, nstart = 10, ite
     }
   }
   names(lowest_res) <- c("cluster", "centers", "wss", "niter")
-  lowest_res$param <- param
-  # }
-
+  lowest_res$k <- k
+  lowest_res$kernel <- kern
+  lowest_res$params <- c(param, param2)
+  class(lowest_res) <- "kkmeans_result"
 
   return(lowest_res)
 }
