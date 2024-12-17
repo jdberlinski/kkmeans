@@ -9,6 +9,7 @@ kkmeans(
   k,
   kern = "g",
   param = 1,
+  param2 = 1,
   nstart = 10,
   iter_max = 1000L,
   estimate = F,
@@ -16,7 +17,8 @@ kkmeans(
   init_centers = sample(1:k, size = nrow(data), replace = TRUE),
   method = c("otqt", "macqueen", "lloyd", "ot"),
   trueest = F,
-  kmat = NULL
+  kmat = NULL,
+  random_centers = TRUE
 )
 }
 \arguments{

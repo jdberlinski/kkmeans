@@ -4,7 +4,7 @@
 \alias{get_kernel_matrix}
 \title{Get the kernel matrix for a dataset}
 \usage{
-get_kernel_matrix(data, kern = "g", param = 1)
+get_kernel_matrix(data, kern = "g", param = 1, param2 = 1)
 }
 \arguments{
 \item{data}{data vector}
