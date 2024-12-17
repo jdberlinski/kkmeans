@@ -75,7 +75,7 @@ SEXP classify_kkmeans(SEXP test_data, SEXP train_data, SEXP labels, SEXP kern, S
   /* the matrix is actually in column-major order so we cannot memcpy */
   for (int i = 1; i <= n_train; i++)
     for (int j = 0; j < p; j++)
-      work[i + j*(n_train + 1)] = x[i + j*n_train];
+      work[i + j*(n_train + 1)] = x[i - 1 + j*n_train];
 
 
   int *train_lab = (int *) S_alloc(n_train, sizeof(int));
@@ -96,10 +96,8 @@ SEXP classify_kkmeans(SEXP test_data, SEXP train_data, SEXP labels, SEXP kern, S
         kern_cross[train_lab[i]] += kernel_matrix[i + j*n_train];
   }
 
-  for (int i = 0; i < k; i++) {
+  for (int i = 0; i < k; i++)
     kern_cross[i] /= (double) (n_k[i] * n_k[i]);
-      // Rprintf("k: %d\t kern_cross[k]: %f\n", i, kern_cross[t], dist);
-  }
 
   double self_kern;
 
