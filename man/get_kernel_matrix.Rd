@@ -4,7 +4,7 @@
 \alias{get_kernel_matrix}
 \title{Get the kernel matrix for a dataset}
 \usage{
-get_kernel_matrix(data, kern = "g", param = 1, param2 = 1)
+get_kernel_matrix(data, kern = "g", param1 = 1, param2 = 1)
 }
 \arguments{
 \item{data}{data vector}
@@ -12,9 +12,9 @@ get_kernel_matrix(data, kern = "g", param = 1, param2 = 1)
 \item{kern}{the kernel to use, one of ('gaussian', 'poly', 'sigmoid', 'laplacian'), can use first
 letter}
 
-\item{param2}{second parameter to pass to kernel function.}
-
 \item{param1}{first parameter to pass to kernel function.}
+
+\item{param2}{second parameter to pass to kernel function.}
 }
 \description{
 Given a dataset, kernel function, and tuning parameter, will
