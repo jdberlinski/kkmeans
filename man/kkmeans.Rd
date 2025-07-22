@@ -30,7 +30,11 @@ kkmeans(
 
 \item{param}{value of parameter to pass to kernel function.(eg sigma in
 gaussian kernel). The Gaussian kernel is K(x, y) = exp(- ||x - y||^2 / (2*\code{param}))),
-and the polynomial kernel is K(x, y) = (x'y + 1) ^ \code{param}}
+and the polynomial kernel is K(x, y) = (x'y + a) ^ \code{param}}
+
+\item{param2}{value of second parameter parameter to pass to the kernel
+function, which correspond to the offset for the sigmoid and polynomial
+kernels.}
 
 \item{nstart}{Number of times to run the algorithm. The run with the lowest
 total within cluster SSE (in feature space) will be returned}
@@ -53,6 +57,10 @@ Wong algorithm for k-means clustering.}
 recomputed in R after clustering is finished}
 
 \item{kmat}{kernel matrix, if using a custom kernel}
+
+\item{random_centers}{if TRUE, then assign \code{k} observations as initial
+clusters, assigning the remaining observations to the closest cluster.
+Otherwise, assign all observations to clusters at random.}
 }
 \value{
 A list containing the following useful information

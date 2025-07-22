@@ -9,7 +9,10 @@
 #' @param kern Kernel to use, one of ('gaussian', 'poly', 'sigmoid', 'laplacian').
 #' @param param value of parameter to pass to kernel function.(eg sigma in
 #' gaussian kernel). The Gaussian kernel is K(x, y) = exp(- ||x - y||^2 / (2*`param`))),
-#' and the polynomial kernel is K(x, y) = (x'y + 1) ^ `param`
+#' and the polynomial kernel is K(x, y) = (x'y + a) ^ `param`
+#' @param param2 value of second parameter parameter to pass to the kernel
+#' function, which correspond to the offset for the sigmoid and polynomial
+#' kernels.
 #' @param nstart Number of times to run the algorithm. The run with the lowest
 #' total within cluster SSE (in feature space) will be returned
 #' @param iter_max The maximum number of iterations to allow.
@@ -24,6 +27,9 @@
 #' @param trueest Whether or not the within-cluster sum of squares should be
 #' recomputed in R after clustering is finished
 #' @param kmat kernel matrix, if using a custom kernel
+#' @param random_centers if TRUE, then assign `k` observations as initial
+#' clusters, assigning the remaining observations to the closest cluster.
+#' Otherwise, assign all observations to clusters at random.
 #' @return A list containing the following useful information
 #' \describe{
 #'   \item{cluster}{The final cluster membership.}
