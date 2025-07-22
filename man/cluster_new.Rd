@@ -4,22 +4,15 @@
 \alias{cluster_new}
 \title{Classify new data based on kkmeans result}
 \usage{
-cluster_new(
-  test_data,
-  train_data,
-  train_labels,
-  kern = "g",
-  param = 1,
-  param2 = 1
-)
+cluster_new(test_data, train_data, train_result)
 }
 \arguments{
-\item{kern}{the kernel to use, one of ('gaussian', 'poly'), can use first
-letter}
+\item{test_data}{the new data to be classified}
 
-\item{param}{parameter to pass to kernel function.}
+\item{train_data}{the data to make classifications from}
 
-\item{data}{data vector}
+\item{train_result}{\code{kkmeans} result containing the result from classifying
+\code{train_data}}
 }
 \description{
 Given training data, test data, and kkmeans-results,

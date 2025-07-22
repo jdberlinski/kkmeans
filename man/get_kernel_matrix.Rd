@@ -9,10 +9,12 @@ get_kernel_matrix(data, kern = "g", param = 1, param2 = 1)
 \arguments{
 \item{data}{data vector}
 
-\item{kern}{the kernel to use, one of ('gaussian', 'poly'), can use first
+\item{kern}{the kernel to use, one of ('gaussian', 'poly', 'sigmoid', 'laplacian'), can use first
 letter}
 
-\item{param}{parameter to pass to kernel function.}
+\item{param2}{second parameter to pass to kernel function.}
+
+\item{param1}{first parameter to pass to kernel function.}
 }
 \description{
 Given a dataset, kernel function, and tuning parameter, will

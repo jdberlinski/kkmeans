@@ -4,10 +4,10 @@
 #' @description Given training data, test data, and kkmeans-results,
 #'  get which partitions a new set of data belong to
 #'
-#' @param data data vector
-#' @param kern the kernel to use, one of ('gaussian', 'poly'), can use first
-#' letter
-#' @param param parameter to pass to kernel function.
+#' @param test_data the new data to be classified
+#' @param train_data the data to make classifications from
+#' @param train_result `kkmeans` result containing the result from classifying
+#' `train_data`
 #' @export
 cluster_new <- function(test_data, train_data, train_result) {
   if (!is.matrix(test_data))

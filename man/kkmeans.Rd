@@ -26,7 +26,7 @@ kkmeans(
 
 \item{k}{Number of clusters.}
 
-\item{kern}{Kernel to use, one of ('gaussian', 'poly').}
+\item{kern}{Kernel to use, one of ('gaussian', 'poly', 'sigmoid', 'laplacian').}
 
 \item{param}{value of parameter to pass to kernel function.(eg sigma in
 gaussian kernel). The Gaussian kernel is K(x, y) = exp(- ||x - y||^2 / (2*\code{param}))),

@@ -11,6 +11,7 @@
 
 int is_na(double value);
 double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq, double blank);
+double kernel_laplacian(int i, int j, double *x, int n, int p, double sigmasq, double blank);
 double kernel_poly(int i, int j, double *x, int n, int p, double h, double a);
 double kernel_sigmoid(int i, int j, double *x, int n, int p, double theta0, double theta1);
 
@@ -40,6 +41,33 @@ double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq, do
   }
 
   return (exp(-0.5 * norm / sigmasq));
+}
+
+/*
+ *  Laplacian kernel
+ *
+ *  exp( ||x - y|| / lambda )
+ *
+ *  note here that we are dividing by the parameter rather than multiplying, to
+ *  keep in line with the gaussian kernel above
+ *
+ * @param i the index of the first observation
+ * @param j index of the second
+ * @param x the data vector
+ * @param p the dimension
+ * @param lambda tuning parameter
+ * @return the kernel evaluated at the two points
+ */
+double kernel_laplacian(int i, int j, double *x, int n, int p, double sigmasq, double blank)
+{
+  double norm = 0.;
+  for (int r = 0 ; r < p ; r++)
+  {
+    if (!is_na(x[i + r*n]) && !is_na(x[j + r*n]))
+      norm +=  fabs(x[i + r*n] - x[j + r*n]);
+  }
+
+  return exp(-1.0 * norm / sigmasq);
 }
 
 /*
