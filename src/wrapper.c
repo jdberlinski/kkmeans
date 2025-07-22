@@ -8,6 +8,7 @@ void get_kernel_matrix(double *x, int n, int p, double h1, double h2,
                        double *kernel_matrix);
 void center_kernel_matrix(double *kernel_matrix, int n);
 double kernel_gaussian(int i, int j, double *x, int n, int p, double sigmasq, double blank);
+double kernel_laplacian(int i, int j, double *x, int n, int p, double sigmasq, double blank);
 double kernel_poly(int i, int j, double *x, int n, int p, double h, double a);
 double kernel_sigmoid(int i, int j, double *x, int n, int p, double theta0, double theta1);
 
@@ -71,6 +72,8 @@ SEXP kkmeans(SEXP data, SEXP centers, SEXP kern, SEXP param, SEXP iter_max, SEXP
 
   if (strcmp(kern_string, "gaussian") == 0 || strcmp(kern_string, "g") == 0)
     kernel = &kernel_gaussian;
+  else if (strcmp(kern_string, "laplacian") == 0 || strcmp(kern_string, "l") == 0)
+    kernel = &kernel_laplacian;
   else if (strcmp(kern_string, "poly") == 0 || strcmp(kern_string, "p") == 0)
     kernel = &kernel_poly;
   else if (strcmp(kern_string, "sigmoid") == 0 || strcmp(kern_string, "s") == 0)

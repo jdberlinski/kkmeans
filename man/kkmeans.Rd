@@ -9,6 +9,7 @@ kkmeans(
   k,
   kern = "g",
   param = 1,
+  param2 = 1,
   nstart = 10,
   iter_max = 1000L,
   estimate = F,
@@ -16,7 +17,8 @@ kkmeans(
   init_centers = sample(1:k, size = nrow(data), replace = TRUE),
   method = c("otqt", "macqueen", "lloyd", "ot"),
   trueest = F,
-  kmat = NULL
+  kmat = NULL,
+  random_centers = TRUE
 )
 }
 \arguments{
@@ -24,7 +26,7 @@ kkmeans(
 
 \item{k}{Number of clusters.}
 
-\item{kern}{Kernel to use, one of ('gaussian', 'poly').}
+\item{kern}{Kernel to use, one of ('gaussian', 'poly', 'sigmoid', 'laplacian').}
 
 \item{param}{value of parameter to pass to kernel function.(eg sigma in
 gaussian kernel). The Gaussian kernel is K(x, y) = exp(- ||x - y||^2 / (2*\code{param}))),

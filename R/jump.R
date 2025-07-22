@@ -14,8 +14,8 @@
 #' clusters
 #' @export
 jump_stat <- function(data, kern = "g", param = 1, k_max, eta, iter_max = 1000L) {
-  valid_kerns = c("gaussian", "poly")
-  valid_prefs = c("g", "p")
+  valid_kerns = c("gaussian", "poly", "sigmoid", "laplacian")
+  valid_prefs = c("g", "p", "s", "l")
 
   # some light error checking
   if ( !(kern %in% valid_kerns) & !(kern %in% valid_prefs) )

@@ -1,0 +1,11 @@
+bibentry(
+  bibtype  = "Article",
+  title    = "Computational Improvements to the Kernel $k$-Means Clustering Algorithm",
+  author   = "Joshua D. Berlinski and Ranjan Maitra",
+  journal  = "Statistical Analysis and Data Mining",
+  year     = 2025,
+  volume   = 18,
+  number   = 4,
+  pages    = "e70032",
+  doi      = "https://doi.org/10.1002/sam.70032"
+)

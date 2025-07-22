@@ -5,14 +5,15 @@
 #' return the n x n kernel matrix
 #'
 #' @param data data vector
-#' @param kern the kernel to use, one of ('gaussian', 'poly'), can use first
+#' @param kern the kernel to use, one of ('gaussian', 'poly', 'sigmoid', 'laplacian'), can use first
 #' letter
-#' @param param parameter to pass to kernel function.
+#' @param param1 first parameter to pass to kernel function.
+#' @param param2 second parameter to pass to kernel function.
 #' @export
 get_kernel_matrix <- function(data, kern = "g", param = 1, param2 = 1) {
 
-  valid_kerns = c("gaussian", "poly", "sigmoid")
-  valid_prefs = c("g", "p", "s")
+  valid_kerns = c("gaussian", "poly", "sigmoid", "laplacian")
+  valid_prefs = c("g", "p", "s", "l")
 
   # some light error checking
   if ( !(kern %in% valid_kerns) & !(kern %in% valid_prefs) )

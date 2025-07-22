@@ -6,7 +6,7 @@
 #'
 #' @param data Numeric data to cluster. This will be converted to a matrix using `as.matrix`.
 #' @param k Number of clusters.
-#' @param kern Kernel to use, one of ('gaussian', 'poly').
+#' @param kern Kernel to use, one of ('gaussian', 'poly', 'sigmoid', 'laplacian').
 #' @param param value of parameter to pass to kernel function.(eg sigma in
 #' gaussian kernel). The Gaussian kernel is K(x, y) = exp(- ||x - y||^2 / (2*`param`))),
 #' and the polynomial kernel is K(x, y) = (x'y + 1) ^ `param`
@@ -46,8 +46,8 @@ kkmeans <- function(data, k, kern = "g", param = 1, param2 = 1, nstart = 10, ite
                     nn = 0, init_centers = sample(1:k, size = nrow(data), replace = TRUE),
                     method = c("otqt", "macqueen", "lloyd", "ot"), trueest = F, kmat = NULL, random_centers = TRUE) {
 
-  valid_kerns = c("gaussian", "poly", "sigmoid")
-  valid_prefs = c("g", "p", "s")
+  valid_kerns = c("gaussian", "poly", "sigmoid", "laplacian")
+  valid_prefs = c("g", "p", "s", "l")
   valid_methods = c("otqt", "macqueen", "lloyd", "ot")
 
   # some light error checking
@@ -146,9 +146,10 @@ kkmeans <- function(data, k, kern = "g", param = 1, param2 = 1, nstart = 10, ite
     }
   }
   names(lowest_res) <- c("cluster", "centers", "wss", "niter")
-  lowest_res$param <- param
-  # }
-
+  lowest_res$k <- k
+  lowest_res$kernel <- kern
+  lowest_res$params <- c(param, param2)
+  class(lowest_res) <- "kkmeans_result"
 
   return(lowest_res)
 }
