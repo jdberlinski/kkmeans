@@ -2,5 +2,7 @@
 tags
 data/
 test.R
-.tar.gz
+*.tar.gz
 .Rproj.user
+kkmeans.Rcheck/
+
