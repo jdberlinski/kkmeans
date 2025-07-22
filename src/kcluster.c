@@ -1004,6 +1004,7 @@ int lloyd_step(double *x,
 void init_centers(int n, int k, int *ic1, int *ic2, int *n_k, double *kernel_matrix)
 {
   int i, j;
+  i = 0;
   double self_kern = kernel_matrix[get_index(i, i, n)];
   int first_center = rand_dunif(n);
   int new_center, old_clust;
