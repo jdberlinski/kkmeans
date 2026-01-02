@@ -16,6 +16,10 @@ matr(dat, k, grid, tol = 0.01)
 \item{tol}{tolerence for choosing the "best" sigma values. Reducing the
 tolerance will give larger values of the bandwidth parameter}
 }
+\value{
+A list with two elements. The first, \code{l}, contains the trace value for
+each of the values in \code{grid}. The second, \code{best}, contains the best value.
+}
 \description{
 given data and number of clusters K, choose a bandwidth from a
 grid according to the MATR algorithm

@@ -3,3 +3,5 @@ tags
 .Rprofile
 ^.*\.Rproj$
 ^\.Rproj\.user$
+.github/
+^README\.md$

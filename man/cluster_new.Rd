@@ -14,6 +14,10 @@ cluster_new(test_data, train_data, train_result)
 \item{train_result}{\code{kkmeans} result containing the result from classifying
 \code{train_data}}
 }
+\value{
+A vector of class labels for \code{test_data} corresponding to the
+clusters present in \code{train_result}.
+}
 \description{
 Given training data, test data, and kkmeans-results,
 get which partitions a new set of data belong to

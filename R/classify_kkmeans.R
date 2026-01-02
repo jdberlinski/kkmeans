@@ -8,6 +8,8 @@
 #' @param train_data the data to make classifications from
 #' @param train_result `kkmeans` result containing the result from classifying
 #' `train_data`
+#' @return A vector of class labels for `test_data` corresponding to the
+#' clusters present in `train_result`.
 #' @export
 cluster_new <- function(test_data, train_data, train_result) {
   if (!is.matrix(test_data))

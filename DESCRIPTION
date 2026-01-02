@@ -1,19 +1,22 @@
 Package: kkmeans
-Title: A Fast Kernel K-Means Package
+Title: Fast Implementations of Kernel K-Means
 Version: 0.1.1
 Authors@R:
     person(given = "Josh",
            family = "Berlinski",
            role = c("aut", "cre"),
            email = "jdberlinski@gmail.com")
-Description: Implementation of a fast kernel k-means algorithm. The method used
-    is similar to the Hartigan-Wong method for k-means.
+Description: Implementations several algorithms for kernel k-means. The default
+  'OTQT' algorithm is a fast alternative to standard implementations of kernel
+  k-means, particularly in cases with many clusters. For a small number of
+  clusters, the implemented 'MacQueen' method typically performs the fasest. For
+  more details and performance evaluations, see Berlinski and Maitra (2025) <doi:10.1002/sam.70032>.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-LinkingTo: 
+LinkingTo:
     Rcpp
-Imports: 
+Imports:
     Rcpp

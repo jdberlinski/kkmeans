@@ -16,6 +16,11 @@ letter}
 
 \item{param2}{second parameter to pass to kernel function.}
 }
+\value{
+An n x n matrix for \code{data} given by the specified kernel. The value
+in position (i, j) corresponds to the kernel function evaluated at \code{data[i, ]}
+and \code{data[j, ]}.
+}
 \description{
 Given a dataset, kernel function, and tuning parameter, will
 return the n x n kernel matrix

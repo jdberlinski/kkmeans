@@ -12,11 +12,11 @@ kkmeans(
   param2 = 1,
   nstart = 10,
   iter_max = 1000L,
-  estimate = F,
+  estimate = FALSE,
   nn = 0,
   init_centers = sample(1:k, size = nrow(data), replace = TRUE),
   method = c("otqt", "macqueen", "lloyd", "ot"),
-  trueest = F,
+  trueest = FALSE,
   kmat = NULL,
   random_centers = TRUE
 )

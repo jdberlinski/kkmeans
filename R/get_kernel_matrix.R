@@ -9,6 +9,9 @@
 #' letter
 #' @param param1 first parameter to pass to kernel function.
 #' @param param2 second parameter to pass to kernel function.
+#' @return An n x n matrix for `data` given by the specified kernel. The value
+#' in position (i, j) corresponds to the kernel function evaluated at `data[i, ]`
+#' and `data[j, ]`.
 #' @export
 get_kernel_matrix <- function(data, kern = "g", param1 = 1, param2 = 1) {
 

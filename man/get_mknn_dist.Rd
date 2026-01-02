@@ -4,12 +4,15 @@
 \alias{get_mknn_dist}
 \title{Get the average distance to each points k-nearest neighbor}
 \usage{
-get_mknn_dist(data, k = F)
+get_mknn_dist(data, k = FALSE)
 }
 \arguments{
 \item{data}{the data vector}
 
 \item{k}{which neighbor to average over}
+}
+\value{
+The average distance from each point to it's \code{k}-th nearest neighbor.
 }
 \description{
 Given a dataset and a value k, will return the value of the

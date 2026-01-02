@@ -48,9 +48,9 @@
 #' # cluster using gaussian kernel
 #' # estimating the parameter with 3-nearest neighbors
 #' result <- kkmeans(data, k = 3, kern = "g", estimate = "mknn", nn = 3)
-kkmeans <- function(data, k, kern = "g", param = 1, param2 = 1, nstart = 10, iter_max = 1000L, estimate = F,
+kkmeans <- function(data, k, kern = "g", param = 1, param2 = 1, nstart = 10, iter_max = 1000L, estimate = FALSE,
                     nn = 0, init_centers = sample(1:k, size = nrow(data), replace = TRUE),
-                    method = c("otqt", "macqueen", "lloyd", "ot"), trueest = F, kmat = NULL, random_centers = TRUE) {
+                    method = c("otqt", "macqueen", "lloyd", "ot"), trueest = FALSE, kmat = NULL, random_centers = TRUE) {
 
   valid_kerns = c("gaussian", "poly", "sigmoid", "laplacian")
   valid_prefs = c("g", "p", "s", "l")

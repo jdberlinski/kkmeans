@@ -6,11 +6,12 @@
 #'
 #' @param data the data vector
 #' @param k which neighbor to average over
+#' @return The average distance from each point to it's `k`-th nearest neighbor.
 #' @importFrom stats dist
 #' @export
-get_mknn_dist <- function(data, k = F) {
+get_mknn_dist <- function(data, k = FALSE) {
   if (!k) k <- round(log2(nrow(data)) + 1)
-  dm <- as.matrix(dist(data, upper = T)) ^ 2
+  dm <- as.matrix(dist(data, upper = TRUE)) ^ 2
   knn_dist <- apply(dm, 1, function(x) x[order(x)[k + 1]])
   return(mean(knn_dist))
 }
