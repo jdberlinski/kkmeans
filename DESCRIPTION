@@ -1,6 +1,6 @@
 Package: kkmeans
 Title: Fast Implementations of Kernel K-Means
-Version: 0.1.1
+Version: 0.1.2
 Authors@R:
     person(given = "Josh",
            family = "Berlinski",
