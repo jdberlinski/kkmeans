@@ -9,7 +9,7 @@ Authors@R:
 Description: Implementations several algorithms for kernel k-means. The default
   'OTQT' algorithm is a fast alternative to standard implementations of kernel
   k-means, particularly in cases with many clusters. For a small number of
-  clusters, the implemented 'MacQueen' method typically performs the fasest. For
+  clusters, the implemented 'MacQueen' method typically performs the fastest. For
   more details and performance evaluations, see Berlinski and Maitra (2025) <doi:10.1002/sam.70032>.
 License: GPL-3
 Encoding: UTF-8

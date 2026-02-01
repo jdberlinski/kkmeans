@@ -63,17 +63,12 @@ kkmeans <- function(data, k, kern = "g", param = 1, param2 = 1, nstart = 10, ite
     k <- as.integer(k)
   if ( !is.integer(nstart) )
     nstart <- as.integer(nstart)
-  # if ( !is.integer(depth) )
-  #   depth <- as.integer(depth)
   if ( !is.matrix(data) ) {
-    # warning("Converting data to matrix.")
     data <- as.matrix(data)
   }
   if ( !is.integer(iter_max) )
     iter_max <- as.integer(iter_max)
 
-  # if (depth > 0 && kern != "g" && kern != "gaussian")
-  #   stop("If depth > 0, `kern` must be gaussian.")
   use_centers <- FALSE
 
   if (length(init_centers) == k) {
@@ -99,11 +94,6 @@ kkmeans <- function(data, k, kern = "g", param = 1, param2 = 1, nstart = 10, ite
     param <- get_mknn_dist(data, nn)
   }
 
-  # if (depth > 0) {
-  #   lowest_res <- .Call('kkmeans_est', data, k, depth, param, iter_max)
-  #   names(lowest_res) <- c("cluster", "centers", "wss", "param")
-  # }
-  # else {
   method <- which(valid_methods == method[[1]])
   lowest_wss <- Inf
   lowest_res <- NULL
@@ -113,8 +103,6 @@ kkmeans <- function(data, k, kern = "g", param = 1, param2 = 1, nstart = 10, ite
     K <- kmat
 
   for (i in 1:nstart) {
-    # if random centers, then choose k points to be the initial centers, and
-    # assign other points to their closest one
     if (random_centers | use_centers) {
       if (random_centers)
         candidate_centers <- sample(nrow(data), k)
