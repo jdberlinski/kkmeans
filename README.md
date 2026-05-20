@@ -6,9 +6,14 @@ similar to [Hartigan and Wong (1979)][1]. See [Berlinski and Maitra (2025)][2]
 for implementation details.
 
 ## Installation
-In the extracted directory:
+From CRAN:
 ```{R}
-devtools::install_github("jdberlinski/kkmeans")
+install.packages("kkmeans")
+```
+
+or, from GitHub:
+```{R}
+pak::pak("jdberlinski/kkmeans")
 ```
 
 ## Usage
